@@ -41,7 +41,7 @@ body {
     display: block;
     width: 25%;
     height: 25%;
-    background-color: #000000;
+    background-color: #DA251D;
     border-radius: 100%;
     animation: sk-chase-dot-before 2.0s infinite ease-in-out both;
 }
