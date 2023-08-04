@@ -1,0 +1,35 @@
+{
+    "name": "appbandeco",
+    "short_name": "appbandeco",
+    "start_url": ".",
+    "display": "standalone",
+    "background_color": "#DA251D",
+    "theme_color": "#DA251D",
+    "description": "Aplicativo que retorna o cardápio do bandejão da Unicamp de Limeira",
+    "orientation": "portrait-primary",
+    "prefer_related_applications": false,
+    "icons": [
+        {
+            "src": "icons/Icon-192.png",
+            "sizes": "192x192",
+            "type": "image/png"
+        },
+        {
+            "src": "icons/Icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png"
+        },
+        {
+            "src": "icons/Icon-maskable-192.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "maskable"
+        },
+        {
+            "src": "icons/Icon-maskable-512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "maskable"
+        }
+    ]
+}
