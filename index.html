@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Escapade en Vendée - Itinéraire</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Warm Neutrals (Beige, Terracotta, Soft Gray) -->
+    <!-- Application Structure Plan: A tab-based SPA with a main navigation bar to select the day (Dimanche-Mercredi) or a "Preparations" tab. This structure breaks the linear report into non-linear, user-selectable sections. The "Preparations" tab acts as a dashboard with budget chart, weather, events, and fun facts. Each day is a visual timeline with an interactive Leaflet map to provide real spatial context. -->
+    <!-- Visualization & Content Choices: 1. Report Info: Daily locations -> Goal: Organize/Spatialize -> Viz/Method: Interactive Leaflet.js Map -> Interaction: Hovering a timeline card opens the marker's popup -> Justification: Provides real, dynamic geographic context. 2. Report Info: Regional details -> Goal: Engage/Inform -> Viz/Method: "Le Saviez-vous ?" interactive cards -> Interaction: Click to reveal fun fact -> Justification: Gamifies learning. 3. Report Info: Current Weather -> Goal: Inform planning -> Viz/Method: Real-time WeatherAPI.com call -> Interaction: Automatic on load -> Justification: Demonstrates live data integration for today's and tomorrow's weather, as requested. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #FDFBF8;
+            color: #4A4A4A;
+        }
+        .nav-button {
+            transition: all 0.3s ease;
+        }
+        .nav-button.active {
+            background-color: #D97706; /* amber-600 */
+            color: white;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            transform: translateY(-2px);
+        }
+        .nav-button:not(.active):hover {
+            background-color: #FBBF24; /* amber-400 */
+            color: white;
+        }
+        .content-section {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        .content-card {
+            background-color: white;
+            border-left: 4px solid #F59E0B; /* amber-500 */
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .content-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin: auto;
+            height: 300px;
+            max-height: 400px;
+        }
+        .gemini-button {
+            background-color: #D97706; color: white;
+            transition: background-color 0.3s;
+        }
+        .gemini-button:hover { background-color: #B45309; }
+        .loader {
+            border: 4px solid #f3f3f3; border-top: 4px solid #D97706;
+            border-radius: 50%; width: 24px; height: 24px;
+            animation: spin 1s linear infinite; margin: 1rem auto;
+        }
+        .fun-fact-card {
+            background: #fff; border-radius: 8px; padding: 1rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05); cursor: pointer;
+        }
+        .fun-fact-card .answer { display: none; }
+        .map-container {
+            height: 450px;
+            border-radius: 8px;
+            z-index: 0;
+        }
+        .leaflet-popup-content-wrapper {
+            background: #FDFBF8;
+            color: #4A4A4A;
+            border-radius: 8px;
+        }
+        .leaflet-popup-tip {
+            background: #FDFBF8;
+        }
+        .weather-card {
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 8px;
+            padding: 1rem;
+            text-align: center;
+        }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body class="antialiased">
+
+    <div class="container mx-auto p-4 md:p-8 max-w-7xl">
+        
+        <header class="text-center mb-8">
+            <h1 class="text-4xl md:text-5xl font-bold text-amber-700">Escapade en Vendée</h1>
+            <p class="mt-2 text-lg text-gray-600">Votre itinéraire interactif pour 4 jours inoubliables</p>
+        </header>
+
+        <nav id="nav-container" class="flex flex-wrap justify-center gap-2 md:gap-4 mb-8">
+            <button data-target="preparatifs" class="nav-button active text-sm md:text-base font-medium py-2 px-4 rounded-full shadow-sm">Préparatifs</button>
+            <button data-target="day1" class="nav-button text-sm md:text-base font-medium py-2 px-4 rounded-full shadow-sm">Dimanche 10</button>
+            <button data-target="day2" class="nav-button text-sm md:text-base font-medium py-2 px-4 rounded-full shadow-sm">Lundi 11</button>
+            <button data-target="day3" class="nav-button text-sm md:text-base font-medium py-2 px-4 rounded-full shadow-sm">Mardi 12</button>
+            <button data-target="day4" class="nav-button text-sm md:text-base font-medium py-2 px-4 rounded-full shadow-sm">Mercredi 13</button>
+        </nav>
+
+        <main id="content-container">
+            
+            <section id="preparatifs" class="content-section space-y-8">
+                <div class="p-6 rounded-lg bg-white shadow-md">
+                    <h2 class="text-2xl font-bold text-amber-700 mb-4">Bienvenue en Vendée !</h2>
+                    <p class="text-gray-700 leading-relaxed">Cette section regroupe toutes les informations utiles pour préparer votre voyage : budget, météo, événements et quelques faits amusants pour vous mettre dans l'ambiance. Utilisez les onglets ci-dessus pour explorer le programme de chaque jour.</p>
+                </div>
+                
+                <div class="grid md:grid-cols-2 gap-8">
+                    <div class="p-6 rounded-lg bg-white shadow-md">
+                        <h3 class="text-xl font-bold text-amber-700 mb-4 text-center">Aperçu des Coûts Fixes</h3>
+                        <div class="chart-container">
+                            <canvas id="budgetChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="p-6 rounded-lg bg-white shadow-md">
+                        <h3 class="text-xl font-bold text-amber-700 mb-4 text-center">Météo Actuelle à La Roche-sur-Yon</h3>
+                        <div id="weather-loader" class="loader"></div>
+                        <div id="weather-forecast" class="hidden grid grid-cols-2 gap-4">
+                            <!-- Weather data will be injected here -->
+                        </div>
+                        <div id="weather-error" class="hidden text-center text-red-500"></div>
+                        <p class="text-xs text-gray-400 mt-2 text-center">(Données en temps réel pour la planification à court terme)</p>
+                    </div>
+                </div>
+
+                <div class="p-6 rounded-lg bg-white shadow-md">
+                    <h3 class="text-xl font-bold text-amber-700 mb-4 text-center">Le Saviez-vous ?</h3>
+                    <div id="fun-facts-container" class="grid md:grid-cols-2 gap-4">
+                        <!-- Fun facts will be injected here by JS -->
+                    </div>
+                </div>
+
+                 <div class="p-6 rounded-lg bg-white shadow-md">
+                    <h3 class="text-xl font-bold text-amber-700 mb-4 text-center">Calendrier des Événements & Marchés</h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr>
+                                    <th class="py-2 px-4 bg-amber-100 border-b-2 border-amber-200 font-semibold">Date</th>
+                                    <th class="py-2 px-4 bg-amber-100 border-b-2 border-amber-200 font-semibold">Lieu</th>
+                                    <th class="py-2 px-4 bg-amber-100 border-b-2 border-amber-200 font-semibold">Événement / Marché</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="hover:bg-amber-50"><td class="py-2 px-4 border-b">Dimanche 10/08</td><td class="py-2 px-4 border-b">La Roche-sur-Yon</td><td class="py-2 px-4 border-b">Grand Vide-Grenier</td></tr>
+                                <tr class="hover:bg-amber-50"><td class="py-2 px-4 border-b">Lundi 11/08</td><td class="py-2 px-4 border-b">Les Sables-d'Olonne</td><td class="py-2 px-4 border-b">Marché Arago (matin)</td></tr>
+                                <tr class="hover:bg-amber-50"><td class="py-2 px-4 border-b">Mardi 12/08</td><td class="py-2 px-4 border-b">La Roche-sur-Yon</td><td class="py-2 px-4 border-b">Veillée Chromatique (Concert)</td></tr>
+                                <tr class="hover:bg-amber-50"><td class="py-2 px-4 border-b">Mercredi 13/08</td><td class="py-2 px-4 border-b">La Roche-sur-Yon</td><td class="py-2 px-4 border-b">Marché de la Garenne (matin)</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <section id="day1" class="content-section hidden space-y-6">
+                <!-- Day 1 cards -->
+                <div class="content-card p-5 rounded-lg shadow-sm"><h3 class="font-bold text-xl text-amber-800">17:00 🚆 Arrivée et Premiers Pas</h3><p class="mt-2 text-gray-700">Arrivée à la gare. Pour un besoin rapide, l'**Épicerie de la Gare** au 8 B Avenue Gambetta est votre premier arrêt stratégique.</p></div>
+                <div class="content-card p-5 rounded-lg shadow-sm"><h3 class="font-bold text-xl text-amber-800">17:30 🛍️ Vide-Grenier Dominical</h3><p class="mt-2 text-gray-700">Plongez dans l'ambiance locale avec le grand vide-grenier annuel. Une occasion parfaite et gratuite pour une première immersion authentique.</p></div>
+                <div class="content-card p-5 rounded-lg shadow-sm"><h3 class="font-bold text-xl text-amber-800">19:30 🍽️ Dîner Convivial</h3><p class="mt-2 text-gray-700">Direction **La Tribu Yonnaise**. Ouvert le dimanche, ce restaurant offre une cuisine maison, des tarifs accessibles et une ambiance chaleureuse. Pensez à réserver !</p></div>
+                <div class="content-card p-5 rounded-lg shadow-sm"><h3 class="font-bold text-xl text-amber-800">21:00 ✨ Magie sur la Place Napoléon</h3><p class="mt-2 text-gray-700">Promenade digestive vers la place centrale pour interagir avec les **Animaux de la Place**, des créatures mécaniques fascinantes. Une attraction gratuite et mémorable pour finir la soirée.</p></div>
+            </section>
+
+            <section id="day2" class="content-section hidden">
+                <div class="grid md:grid-cols-2 gap-8">
+                    <div class="space-y-6">
+                        <div data-marker="remblai" class="content-card p-5 rounded-lg shadow-sm cursor-pointer"><h3 class="font-bold text-xl text-amber-800">11:00 🚶 Balade Iconique</h3><p class="mt-2 text-gray-700">Marchez sur le **Remblai** qui longe la Grande Plage, puis perdez-vous dans les ruelles de l'**Île Penotte**.</p></div>
+                        <div data-marker="marche" class="content-card p-5 rounded-lg shadow-sm cursor-pointer"><h3 class="font-bold text-xl text-amber-800">12:30 🧺 Pique-nique sur la Plage</h3><p class="mt-2 text-gray-700">Faites vos provisions au **Marché Arago** pour un déjeuner économique avec une vue imprenable.</p></div>
+                        <div data-marker="chaume" class="content-card p-5 rounded-lg shadow-sm cursor-pointer"><h3 class="font-bold text-xl text-amber-800">14:00 ⛵ L'Âme de La Chaume</h3><p class="mt-2 text-gray-700">Prenez le "passeur" pour explorer **La Chaume**, le quartier des pêcheurs, et montez au **Prieuré Saint-Nicolas**.</p></div>
+                        <div data-marker="gareSables" class="content-card p-5 rounded-lg shadow-sm cursor-pointer"><h3 class="font-bold text-xl text-amber-800">17:30 🚆 Retour</h3><p class="mt-2 text-gray-700">Reprenez le train vers La Roche-sur-Yon depuis la gare des Sables-d'Olonne.</p></div>
+                    </div>
+                    <div class="sticky top-8">
+                        <h3 class="text-xl font-bold text-amber-700 mb-4 text-center">Carte des Sables-d'Olonne</h3>
+                        <div id="map-day2" class="map-container"></div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="day3" class="content-section hidden">
+                 <div class="grid md:grid-cols-2 gap-8">
+                    <div class="space-y-6">
+                        <div data-marker="haras" class="content-card p-5 rounded-lg shadow-sm cursor-pointer"><h3 class="font-bold text-xl text-amber-800">10:00 🐎 Culture Équestre</h3><p class="mt-2 text-gray-700">Visite du **Haras de la Vendée**. Explorez ce site de 4,5 hectares, visitez les écuries et assistez aux animations. (Entrée : 10€).</p></div>
+                        <div data-marker="bus" class="content-card p-5 rounded-lg shadow-sm cursor-pointer"><h3 class="font-bold text-xl text-amber-800">14:30 🚌 Trésors du Bocage</h3><p class="mt-2 text-gray-700">Excursion en bus Aléop vers **La Chaize-le-Vicomte** depuis la gare routière pour découvrir un village vendéen.</p></div>
+                        <div data-marker="concert" class="content-card p-5 rounded-lg shadow-sm cursor-pointer"><h3 class="font-bold text-xl text-amber-800">21:00 🎶 Soirée en Musique</h3><p class="mt-2 text-gray-700">Ne manquez pas la **Veillée Chromatique**, un concert gratuit en plein air pour vivre une soirée estivale comme un local.</p></div>
+                    </div>
+                    <div class="sticky top-8">
+                        <h3 class="text-xl font-bold text-amber-700 mb-4 text-center">Carte de La Roche-sur-Yon & Alentours</h3>
+                        <div id="map-day3" class="map-container"></div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="day4" class="content-section hidden space-y-6">
+                <!-- Day 4 cards with Gemini features -->
+                <div class="content-card p-5 rounded-lg shadow-sm"><h3 class="font-bold text-xl text-amber-800">09:00 🥕 Marché et Flânerie</h3><p class="mt-2 text-gray-700">Visite du **Marché de la Garenne** pour une dernière dose de produits locaux.</p><div class="mt-4"><button id="picnic-btn" class="gemini-button font-bold py-2 px-4 rounded-full inline-flex items-center gap-2"><span>✨</span> Idées de Pique-nique</button><div id="picnic-loader" class="loader hidden"></div><div id="picnic-suggestions" class="mt-4 p-4 bg-amber-50 rounded-lg hidden text-gray-800"></div></div></div>
+                <div class="content-card p-5 rounded-lg shadow-sm"><h3 class="font-bold text-xl text-amber-800">13:00 🧺 Dernier Pique-nique</h3><p class="mt-2 text-gray-700">Profitez des produits frais du marché pour un déjeuner relaxant dans un parc de la ville.</p></div>
+                <div class="content-card p-5 rounded-lg shadow-sm"><h3 class="font-bold text-xl text-amber-800">14:30 ☕ Temps Libre</h3><p class="mt-2 text-gray-700">Derniers achats ou un café en terrasse pour savourer les derniers instants.</p><div class="mt-4"><label for="activity-interest" class="block text-sm font-medium text-gray-700">Quel est votre intérêt ?</label><div class="mt-1 flex gap-2"><input type="text" id="activity-interest" class="flex-grow p-2 border border-gray-300 rounded-md" placeholder="ex: art, détente..."><button id="activity-btn" class="gemini-button font-bold py-2 px-4 rounded-full inline-flex items-center gap-2"><span>✨</span> Suggérer</button></div><div id="activity-loader" class="loader hidden"></div><div id="activity-suggestions" class="mt-4 p-4 bg-amber-50 rounded-lg hidden text-gray-800"></div></div></div>
+                <div class="content-card p-5 rounded-lg shadow-sm"><h3 class="font-bold text-xl text-amber-800">17:45 👋 Départ</h3><p class="mt-2 text-gray-700">Arrivée à la gare pour prendre votre train de 18:11.</p></div>
+            </section>
+        </main>
+
+        <footer class="text-center mt-12 pt-8 border-t border-gray-200"><p class="text-gray-500">Créé avec soin pour une expérience de voyage inoubliable.</p></footer>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const navContainer = document.getElementById('nav-container');
+            const contentContainer = document.getElementById('content-container');
+            const navButtons = navContainer.querySelectorAll('.nav-button');
+            const contentSections = contentContainer.querySelectorAll('.content-section');
+            let maps = {}; // To store initialized map instances
+            let weatherFetched = false;
+
+            function initMap(mapId, center, zoom, markersData) {
+                if (maps[mapId]) return;
+
+                const map = L.map(mapId).setView(center, zoom);
+                maps[mapId] = { map: map, markers: {} };
+
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                }).addTo(map);
+
+                const icon = L.icon({
+                    iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+                    shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+                    iconSize: [25, 41],
+                    iconAnchor: [12, 41],
+                    popupAnchor: [1, -34],
+                    shadowSize: [41, 41]
+                });
+
+                for (const key in markersData) {
+                    const markerInfo = markersData[key];
+                    const marker = L.marker(markerInfo.coords, {icon: icon}).addTo(map)
+                        .bindPopup(`<b>${markerInfo.title}</b>`);
+                    maps[mapId].markers[key] = marker;
+                }
+                setTimeout(() => map.invalidateSize(), 100);
+            }
+            
+            function getWeatherEmoji(conditionCode) {
+                // Weather condition codes from WeatherAPI.com
+                const code = Number(conditionCode);
+                if (code === 1000) return '☀️'; // Sunny/Clear
+                if ([1003, 1006, 1009].includes(code)) return '☁️'; // Partly cloudy, Cloudy, Overcast
+                if (code >= 1063 && code <= 1201) return '🌧️'; // Patchy rain, Light drizzle, Light rain, Moderate rain, Heavy rain, Freezing drizzle
+                if (code >= 1273 && code <= 1282) return '⛈️'; // Thunder
+                if (code >= 1204 && code <= 1264) return '❄️'; // Sleet, Snow
+                if ([1030, 1135, 1147].includes(code)) return '🌫️'; // Mist, Fog
+                return '🌡️'; // Default
+            }
+
+            async function getRealTimeWeather() {
+                if (weatherFetched) return;
+
+                const loader = document.getElementById('weather-loader');
+                const forecastContainer = document.getElementById('weather-forecast');
+                const errorContainer = document.getElementById('weather-error');
+                
+                const weatherApiKey = "4dea036e0e1947e69d8143342252107"; 
+                const location = "La Roche-sur-Yon";
+                const url = `https://api.weatherapi.com/v1/forecast.json?key=${weatherApiKey}&q=${location}&days=2&lang=fr`;
+
+                loader.classList.remove('hidden');
+                forecastContainer.classList.add('hidden');
+                errorContainer.classList.add('hidden');
+
+                try {
+                    const response = await fetch(url);
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(errorData.error.message || `Erreur réseau: ${response.status}`);
+                    }
+                    const data = await response.json();
+                    
+                    weatherFetched = true;
+                    forecastContainer.innerHTML = '';
+
+                    // Today's forecast
+                    const todayForecast = data.forecast.forecastday[0];
+                    const currentTemp = data.current.temp_c;
+                    const todayEmoji = getWeatherEmoji(todayForecast.day.condition.code);
+                    const todayCard = `
+                        <div class="weather-card">
+                            <h4 class="font-bold text-lg">Aujourd'hui</h4>
+                            <p class="text-4xl my-2">${todayEmoji}</p>
+                            <p class="font-semibold text-2xl">${currentTemp}°C</p>
+                            <p class="text-gray-600">Max: ${todayForecast.day.maxtemp_c}°C / Min: ${todayForecast.day.mintemp_c}°C</p>
+                            <p class="text-sm italic">${todayForecast.day.condition.text}</p>
+                        </div>
+                    `;
+                    forecastContainer.innerHTML += todayCard;
+
+                    // Tomorrow's forecast
+                    const tomorrowForecast = data.forecast.forecastday[1];
+                    const tomorrowEmoji = getWeatherEmoji(tomorrowForecast.day.condition.code);
+                    const willItRain = tomorrowForecast.day.daily_will_it_rain ? "Pluie attendue" : "Pas de pluie attendue";
+                    const tomorrowCard = `
+                        <div class="weather-card">
+                            <h4 class="font-bold text-lg">Demain</h4>
+                            <p class="text-4xl my-2">${tomorrowEmoji}</p>
+                            <p class="font-semibold text-xl">Max: ${tomorrowForecast.day.maxtemp_c}°C</p>
+                            <p class="text-gray-600">Min: ${tomorrowForecast.day.mintemp_c}°C</p>
+                            <p class="text-sm italic font-semibold">${willItRain}</p>
+                        </div>
+                    `;
+                    forecastContainer.innerHTML += tomorrowCard;
+
+                    forecastContainer.classList.remove('hidden');
+
+                } catch (error) {
+                    console.error("Erreur API WeatherAPI.com:", error);
+                    errorContainer.innerText = `Impossible de récupérer les données météo. ${error.message}`;
+                    errorContainer.classList.remove('hidden');
+                } finally {
+                    loader.classList.add('hidden');
+                }
+            }
+
+
+            function switchTab(targetId) {
+                navButtons.forEach(button => {
+                    button.classList.toggle('active', button.dataset.target === targetId);
+                });
+                contentSections.forEach(section => {
+                    section.classList.toggle('hidden', section.id !== targetId);
+                });
+
+                if (targetId === 'preparatifs') {
+                    getRealTimeWeather();
+                } else if (targetId === 'day2') {
+                    const markersDay2 = {
+                        gareSables: { coords: [46.499, -1.777], title: "Gare des Sables-d'Olonne" },
+                        remblai: { coords: [46.493, -1.785], title: "Remblai / Île Penotte" },
+                        marche: { coords: [46.496, -1.782], title: "Marché Arago" },
+                        chaume: { coords: [46.493, -1.795], title: "La Chaume" }
+                    };
+                    initMap('map-day2', [46.495, -1.785], 14, markersDay2);
+                } else if (targetId === 'day3') {
+                    const markersDay3 = {
+                        haras: { coords: [46.673, -1.443], title: "Haras de la Vendée" },
+                        bus: { coords: [46.666, -1.428], title: "Gare Routière (vers La Chaize)" },
+                        concert: { coords: [46.671, -1.427], title: "Centre-ville (Concert)" },
+                        chaize: { coords: [46.6733, -1.2936], title: "La Chaize-le-Vicomte" }
+                    };
+                    initMap('map-day3', [46.67, -1.36], 11, markersDay3);
+                }
+            }
+            
+            navContainer.addEventListener('click', (e) => {
+                const targetButton = e.target.closest('.nav-button');
+                if (targetButton) switchTab(targetButton.dataset.target);
+            });
+            
+            document.querySelectorAll('#day2 .content-card, #day3 .content-card').forEach(card => {
+                card.addEventListener('mouseenter', () => {
+                    const markerId = card.dataset.marker;
+                    const mapId = card.closest('.content-section').id === 'day2' ? 'map-day2' : 'map-day3';
+                    if (maps[mapId] && maps[mapId].markers[markerId]) {
+                        maps[mapId].markers[markerId].openPopup();
+                    }
+                });
+            });
+
+            new Chart(document.getElementById('budgetChart').getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: ['Train A/R Les Sables', 'Entrée Haras', 'Bus A/R La Chaize (max)'],
+                    datasets: [{
+                        label: 'Coût en €',
+                        data: [14.00, 10.00, 7.40],
+                        backgroundColor: ['rgba(217, 119, 6, 0.6)', 'rgba(245, 158, 11, 0.6)', 'rgba(251, 191, 36, 0.6)'],
+                        borderColor: ['rgb(217, 119, 6)', 'rgb(245, 158, 11)', 'rgb(251, 191, 36)'],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    scales: { y: { beginAtZero: true, ticks: { callback: value => value + '€' } } },
+                    plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => `${c.dataset.label}: ${new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(c.parsed.y)}` } } }
+                }
+            });
+
+            const funFacts = [
+                { q: "D'où vient le nom 'Vendée Globe' ?", a: "De la rivière Vendée qui traverse le département, et 'Globe' pour son tour du monde à la voile, en solitaire et sans escale, qui part des Sables-d'Olonne." },
+                { q: "Pourquoi La Roche-sur-Yon a-t-elle une forme de pentagone ?", a: "C'est Napoléon Ier qui a décidé de sa reconstruction au début du 19e siècle. Il a voulu une ville moderne avec un plan en forme de pentagone et des rues rectilignes, typique de l'urbanisme militaire de l'époque." },
+                { q: "Qu'est-ce que le Préfou ?", a: "Une spécialité vendéenne ! C'est un pain peu levé, garni d'ail frais et de beurre, que l'on passe au four. Parfait pour l'apéritif." },
+                { q: "Les 'Animaux de la Place' sont inspirés de quoi ?", a: "De la campagne d'Égypte de Napoléon ! Les créatures (ibis, hippopotame, dromadaire...) sont un clin d'œil à la faune découverte lors de cette expédition scientifique et militaire." }
+            ];
+            const funFactsContainer = document.getElementById('fun-facts-container');
+            funFacts.forEach(fact => {
+                const card = document.createElement('div');
+                card.className = 'fun-fact-card';
+                card.innerHTML = `<div class="font-semibold">${fact.q}</div><div class="answer mt-2 text-gray-600">${fact.a}</div>`;
+                card.addEventListener('click', () => {
+                    card.querySelector('.answer').style.display = card.querySelector('.answer').style.display === 'block' ? 'none' : 'block';
+                });
+                funFactsContainer.appendChild(card);
+            });
+
+            const geminiApiKey = ""; 
+            async function callGemini(prompt, loader, resultContainer) {
+                loader.classList.remove('hidden');
+                resultContainer.classList.add('hidden');
+                resultContainer.innerHTML = '';
+                const payload = { contents: [{ role: "user", parts: [{ text: prompt }] }] };
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiApiKey}`;
+                try {
+                    const response = await fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                    if (!response.ok) throw new Error(`Erreur réseau: ${response.status}`);
+                    const result = await response.json();
+                    let text = "Désolé, je n'ai pas pu trouver de suggestion. Veuillez réessayer.";
+                    if (result.candidates?.[0]?.content?.parts?.[0]) {
+                        text = result.candidates[0].content.parts[0].text;
+                    }
+                    resultContainer.innerHTML = text.replace(/\n/g, '<br>').replace(/\*/g, '');
+                } catch (error) {
+                    console.error("Erreur API Gemini:", error);
+                    resultContainer.innerHTML = "Une erreur est survenue.";
+                } finally {
+                    loader.classList.add('hidden');
+                    resultContainer.classList.remove('hidden');
+                }
+            }
+
+            document.getElementById('picnic-btn').addEventListener('click', () => {
+                const prompt = "En tant qu'expert culinaire de la Vendée, suggérez 3 idées de pique-nique simples et délicieuses à préparer avec des produits typiques du Marché de la Garenne à La Roche-sur-Yon. Mentionnez des produits comme le préfou, les mogettes, et des fruits de mer. Présentez en liste numérotée avec titres en gras.";
+                callGemini(prompt, document.getElementById('picnic-loader'), document.getElementById('picnic-suggestions'));
+            });
+
+            document.getElementById('activity-btn').addEventListener('click', () => {
+                const interest = document.getElementById('activity-interest').value.trim();
+                if (!interest) {
+                    const suggestions = document.getElementById('activity-suggestions');
+                    suggestions.innerHTML = "Veuillez entrer un intérêt.";
+                    suggestions.classList.remove('hidden');
+                    return;
+                }
+                const prompt = `Suggérez 3 activités gratuites ou peu coûteuses à La Roche-sur-Yon pour un après-midi libre, axées sur : "${interest}". Donnez une brève description. Présentez en liste numérotée avec titres en gras.`;
+                callGemini(prompt, document.getElementById('activity-loader'), document.getElementById('activity-suggestions'));
+            });
+
+            // Initial load
+            getRealTimeWeather();
+        });
+    </script>
+</body>
+</html>
