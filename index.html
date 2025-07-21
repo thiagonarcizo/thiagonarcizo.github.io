@@ -13,7 +13,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
     <!-- Chosen Palette: Warm Neutrals (Beige, Terracotta, Soft Gray) -->
     <!-- Application Structure Plan: A tab-based SPA with a main navigation bar to select the day (Dimanche-Mercredi) or a "Preparations" tab. This structure breaks the linear report into non-linear, user-selectable sections. The "Preparations" tab acts as a dashboard with budget chart, weather, events, and fun facts. Each day is a visual timeline with an interactive Leaflet map to provide real spatial context. -->
-    <!-- Visualization & Content Choices: 1. Report Info: Daily locations -> Goal: Organize/Spatialize -> Viz/Method: Interactive Leaflet.js Map -> Interaction: Hovering a timeline card opens the marker's popup -> Justification: Provides real, dynamic geographic context. 2. Report Info: Regional details -> Goal: Engage/Inform -> Viz/Method: "Le Saviez-vous ?" interactive cards -> Interaction: Click to reveal fun fact -> Justification: Gamifies learning. 3. Report Info: Current Weather -> Goal: Inform planning -> Viz/Method: Real-time WeatherAPI.com call -> Interaction: Automatic on load -> Justification: Demonstrates live data integration for today's and tomorrow's weather, as requested. -->
+    <!-- Visualization & Content Choices: 1. Report Info: Daily locations -> Goal: Organize/Spatialize -> Viz/Method: Interactive Leaflet.js Map -> Interaction: Hovering a timeline card opens the marker's popup -> Justification: Provides real, dynamic geographic context. 2. Report Info: Regional details -> Goal: Engage/Inform -> Viz/Method: "Le Saviez-vous ?" interactive cards -> Interaction: Click to reveal fun fact -> Justification: Gamifies learning. 3. Report Info: Current Weather -> Goal: Inform planning -> Viz/Method: Real-time WeatherAPI.com call -> Interaction: Automatic on load -> Justification: Demonstrates live data integration. 4. Report Info: Local specialties/activities -> Goal: Inform/Engage -> Viz/Method: Interactive clickable cards/buttons -> Interaction: Click to reveal pre-written content -> Justification: Replaces API calls with self-contained, interactive elements that still provide value and user choice. -->
     <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
     <style>
         body {
@@ -54,11 +54,6 @@
             height: 300px;
             max-height: 400px;
         }
-        .gemini-button {
-            background-color: #D97706; color: white;
-            transition: background-color 0.3s;
-        }
-        .gemini-button:hover { background-color: #B45309; }
         .loader {
             border: 4px solid #f3f3f3; border-top: 4px solid #D97706;
             border-radius: 50%; width: 24px; height: 24px;
@@ -87,6 +82,25 @@
             border-radius: 8px;
             padding: 1rem;
             text-align: center;
+        }
+        .theme-button {
+            background-color: #FDBA74;
+            color: #9A3412;
+            transition: all 0.2s ease;
+        }
+        .theme-button.active, .theme-button:hover {
+            background-color: #D97706;
+            color: white;
+        }
+        .specialty-item {
+            cursor: pointer;
+            background-color: #FEF3C7;
+            border-left: 3px solid #FBBF24;
+        }
+        .specialty-item .description {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.5s ease-out;
         }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
@@ -132,6 +146,21 @@
                         </div>
                         <div id="weather-error" class="hidden text-center text-red-500"></div>
                         <p class="text-xs text-gray-400 mt-2 text-center">(Données en temps réel pour la planification à court terme)</p>
+                    </div>
+                </div>
+
+                <div class="p-6 rounded-lg bg-white shadow-md">
+                    <h3 class="text-xl font-bold text-amber-700 mb-4 text-center">Aperçu du Voyage</h3>
+                    <div class="grid md:grid-cols-3 gap-4">
+                        <div class="overflow-hidden rounded-lg shadow-lg aspect-w-1 aspect-h-1">
+                            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/01/Les_Sables-d%27Olonne_%282010%29.JPG/1200px-Les_Sables-d%27Olonne_%282010%29.JPG" alt="Plage et port des Sables-d'Olonne" class="w-full h-full object-cover">
+                        </div>
+                        <div class="overflow-hidden rounded-lg shadow-lg aspect-w-1 aspect-h-1">
+                             <img src="https://www.appartcity.com/uploads/media/image_city/0001/25/image_city_big/24003_la-roche-sur-yon-appartcity-appartement-hotel-desktop.jpg" alt="Place Napoléon à La Roche-sur-Yon" class="w-full h-full object-cover">
+                        </div>
+                        <div class="overflow-hidden rounded-lg shadow-lg aspect-w-1 aspect-h-1">
+                             <img src="https://www.vendee.fr/fileadmin/_processed_/a/0/csm_visuel_haras_ete_2024_0d7b610a35.jpg" alt="Spectacle équestre au Haras de la Vendée" class="w-full h-full object-cover">
+                        </div>
                     </div>
                 </div>
 
@@ -202,10 +231,29 @@
             </section>
 
             <section id="day4" class="content-section hidden space-y-6">
-                <!-- Day 4 cards with Gemini features -->
-                <div class="content-card p-5 rounded-lg shadow-sm"><h3 class="font-bold text-xl text-amber-800">09:00 🥕 Marché et Flânerie</h3><p class="mt-2 text-gray-700">Visite du **Marché de la Garenne** pour une dernière dose de produits locaux.</p><div class="mt-4"><button id="picnic-btn" class="gemini-button font-bold py-2 px-4 rounded-full inline-flex items-center gap-2"><span>✨</span> Idées de Pique-nique</button><div id="picnic-loader" class="loader hidden"></div><div id="picnic-suggestions" class="mt-4 p-4 bg-amber-50 rounded-lg hidden text-gray-800"></div></div></div>
-                <div class="content-card p-5 rounded-lg shadow-sm"><h3 class="font-bold text-xl text-amber-800">13:00 🧺 Dernier Pique-nique</h3><p class="mt-2 text-gray-700">Profitez des produits frais du marché pour un déjeuner relaxant dans un parc de la ville.</p></div>
-                <div class="content-card p-5 rounded-lg shadow-sm"><h3 class="font-bold text-xl text-amber-800">14:30 ☕ Temps Libre</h3><p class="mt-2 text-gray-700">Derniers achats ou un café en terrasse pour savourer les derniers instants.</p><div class="mt-4"><label for="activity-interest" class="block text-sm font-medium text-gray-700">Quel est votre intérêt ?</label><div class="mt-1 flex gap-2"><input type="text" id="activity-interest" class="flex-grow p-2 border border-gray-300 rounded-md" placeholder="ex: art, détente..."><button id="activity-btn" class="gemini-button font-bold py-2 px-4 rounded-full inline-flex items-center gap-2"><span>✨</span> Suggérer</button></div><div id="activity-loader" class="loader hidden"></div><div id="activity-suggestions" class="mt-4 p-4 bg-amber-50 rounded-lg hidden text-gray-800"></div></div></div>
+                <div class="content-card p-5 rounded-lg shadow-sm">
+                    <h3 class="font-bold text-xl text-amber-800">09:00 🥕 Marché et Spécialités</h3>
+                    <p class="mt-2 text-gray-700">Visite du **Marché de la Garenne** pour une dernière dose de produits locaux. Cliquez pour découvrir quelques spécialités à ne pas manquer :</p>
+                    <div id="specialties-container" class="mt-4 space-y-2">
+                        <!-- Specialties will be injected here -->
+                    </div>
+                </div>
+                <div class="content-card p-5 rounded-lg shadow-sm">
+                    <h3 class="font-bold text-xl text-amber-800">13:00 🧺 Dernier Pique-nique</h3>
+                    <p class="mt-2 text-gray-700">Profitez des produits frais du marché pour un déjeuner relaxant dans un parc de la ville.</p>
+                </div>
+                <div class="content-card p-5 rounded-lg shadow-sm">
+                    <h3 class="font-bold text-xl text-amber-800">14:30 ☕ Personnalisez votre après-midi</h3>
+                    <p class="mt-2 text-gray-700">Choisissez un thème pour votre temps libre :</p>
+                    <div id="themes-container" class="flex flex-wrap gap-2 mt-4">
+                        <button data-theme="culture" class="theme-button font-bold py-2 px-4 rounded-full">Culture & Histoire</button>
+                        <button data-theme="nature" class="theme-button font-bold py-2 px-4 rounded-full">Nature & Détente</button>
+                        <button data-theme="gourmandise" class="theme-button font-bold py-2 px-4 rounded-full">Gourmandise</button>
+                    </div>
+                    <div id="themes-suggestions" class="mt-4">
+                        <!-- Suggestions will be injected here -->
+                    </div>
+                </div>
                 <div class="content-card p-5 rounded-lg shadow-sm"><h3 class="font-bold text-xl text-amber-800">17:45 👋 Départ</h3><p class="mt-2 text-gray-700">Arrivée à la gare pour prendre votre train de 18:11.</p></div>
             </section>
         </main>
@@ -251,11 +299,10 @@
             }
             
             function getWeatherEmoji(conditionCode) {
-                // Weather condition codes from WeatherAPI.com
                 const code = Number(conditionCode);
                 if (code === 1000) return '☀️'; // Sunny/Clear
                 if ([1003, 1006, 1009].includes(code)) return '☁️'; // Partly cloudy, Cloudy, Overcast
-                if (code >= 1063 && code <= 1201) return '🌧️'; // Patchy rain, Light drizzle, Light rain, Moderate rain, Heavy rain, Freezing drizzle
+                if (code >= 1063 && code <= 1201) return '🌧️'; // Various rain types
                 if (code >= 1273 && code <= 1282) return '⛈️'; // Thunder
                 if (code >= 1204 && code <= 1264) return '❄️'; // Sleet, Snow
                 if ([1030, 1135, 1147].includes(code)) return '🌫️'; // Mist, Fog
@@ -288,34 +335,16 @@
                     weatherFetched = true;
                     forecastContainer.innerHTML = '';
 
-                    // Today's forecast
                     const todayForecast = data.forecast.forecastday[0];
                     const currentTemp = data.current.temp_c;
                     const todayEmoji = getWeatherEmoji(todayForecast.day.condition.code);
-                    const todayCard = `
-                        <div class="weather-card">
-                            <h4 class="font-bold text-lg">Aujourd'hui</h4>
-                            <p class="text-4xl my-2">${todayEmoji}</p>
-                            <p class="font-semibold text-2xl">${currentTemp}°C</p>
-                            <p class="text-gray-600">Max: ${todayForecast.day.maxtemp_c}°C / Min: ${todayForecast.day.mintemp_c}°C</p>
-                            <p class="text-sm italic">${todayForecast.day.condition.text}</p>
-                        </div>
-                    `;
+                    const todayCard = `<div class="weather-card"><h4 class="font-bold text-lg">Aujourd'hui</h4><p class="text-4xl my-2">${todayEmoji}</p><p class="font-semibold text-2xl">${currentTemp}°C</p><p class="text-gray-600">Max: ${todayForecast.day.maxtemp_c}°C / Min: ${todayForecast.day.mintemp_c}°C</p><p class="text-sm italic">${todayForecast.day.condition.text}</p></div>`;
                     forecastContainer.innerHTML += todayCard;
 
-                    // Tomorrow's forecast
                     const tomorrowForecast = data.forecast.forecastday[1];
                     const tomorrowEmoji = getWeatherEmoji(tomorrowForecast.day.condition.code);
                     const willItRain = tomorrowForecast.day.daily_will_it_rain ? "Pluie attendue" : "Pas de pluie attendue";
-                    const tomorrowCard = `
-                        <div class="weather-card">
-                            <h4 class="font-bold text-lg">Demain</h4>
-                            <p class="text-4xl my-2">${tomorrowEmoji}</p>
-                            <p class="font-semibold text-xl">Max: ${tomorrowForecast.day.maxtemp_c}°C</p>
-                            <p class="text-gray-600">Min: ${tomorrowForecast.day.mintemp_c}°C</p>
-                            <p class="text-sm italic font-semibold">${willItRain}</p>
-                        </div>
-                    `;
+                    const tomorrowCard = `<div class="weather-card"><h4 class="font-bold text-lg">Demain</h4><p class="text-4xl my-2">${tomorrowEmoji}</p><p class="font-semibold text-xl">Max: ${tomorrowForecast.day.maxtemp_c}°C</p><p class="text-gray-600">Min: ${tomorrowForecast.day.mintemp_c}°C</p><p class="text-sm italic font-semibold">${willItRain}</p></div>`;
                     forecastContainer.innerHTML += tomorrowCard;
 
                     forecastContainer.classList.remove('hidden');
@@ -328,7 +357,6 @@
                     loader.classList.add('hidden');
                 }
             }
-
 
             function switchTab(targetId) {
                 navButtons.forEach(button => {
@@ -410,46 +438,41 @@
                 funFactsContainer.appendChild(card);
             });
 
-            const geminiApiKey = ""; 
-            async function callGemini(prompt, loader, resultContainer) {
-                loader.classList.remove('hidden');
-                resultContainer.classList.add('hidden');
-                resultContainer.innerHTML = '';
-                const payload = { contents: [{ role: "user", parts: [{ text: prompt }] }] };
-                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiApiKey}`;
-                try {
-                    const response = await fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-                    if (!response.ok) throw new Error(`Erreur réseau: ${response.status}`);
-                    const result = await response.json();
-                    let text = "Désolé, je n'ai pas pu trouver de suggestion. Veuillez réessayer.";
-                    if (result.candidates?.[0]?.content?.parts?.[0]) {
-                        text = result.candidates[0].content.parts[0].text;
-                    }
-                    resultContainer.innerHTML = text.replace(/\n/g, '<br>').replace(/\*/g, '');
-                } catch (error) {
-                    console.error("Erreur API Gemini:", error);
-                    resultContainer.innerHTML = "Une erreur est survenue.";
-                } finally {
-                    loader.classList.add('hidden');
-                    resultContainer.classList.remove('hidden');
-                }
-            }
-
-            document.getElementById('picnic-btn').addEventListener('click', () => {
-                const prompt = "En tant qu'expert culinaire de la Vendée, suggérez 3 idées de pique-nique simples et délicieuses à préparer avec des produits typiques du Marché de la Garenne à La Roche-sur-Yon. Mentionnez des produits comme le préfou, les mogettes, et des fruits de mer. Présentez en liste numérotée avec titres en gras.";
-                callGemini(prompt, document.getElementById('picnic-loader'), document.getElementById('picnic-suggestions'));
+            const specialties = [
+                { name: 'Préfou', desc: "Un pain à l'ail et au beurre, servi chaud à l'apéritif. Simple, mais absolument délicieux et incontournable." },
+                { name: 'Mogettes', desc: "Des haricots blancs secs, souvent cuisinés avec du jambon de Vendée. C'est le cœur de la cuisine rustique locale." },
+                { name: 'Troussepinette', desc: "Un apéritif artisanal à base de vin, d'eau-de-vie et de jeunes pousses d'épine noire. Doux et surprenant." },
+                { name: 'Fion Vendéen', desc: "Un flan aux œufs et à la cannelle, un dessert traditionnel et réconfortant que l'on trouve dans les bonnes boulangeries." }
+            ];
+            const specialtiesContainer = document.getElementById('specialties-container');
+            specialties.forEach(item => {
+                const specialtyEl = document.createElement('div');
+                specialtyEl.className = 'specialty-item p-3 rounded';
+                specialtyEl.innerHTML = `<div class="font-semibold flex justify-between items-center"><span>${item.name}</span><span>+</span></div><div class="description pt-2 text-sm text-gray-700">${item.desc}</div>`;
+                specialtyEl.addEventListener('click', (e) => {
+                    const desc = e.currentTarget.querySelector('.description');
+                    const isOpen = desc.style.maxHeight && desc.style.maxHeight !== '0px';
+                    desc.style.maxHeight = isOpen ? '0px' : `${desc.scrollHeight}px`;
+                });
+                specialtiesContainer.appendChild(specialtyEl);
             });
-
-            document.getElementById('activity-btn').addEventListener('click', () => {
-                const interest = document.getElementById('activity-interest').value.trim();
-                if (!interest) {
-                    const suggestions = document.getElementById('activity-suggestions');
-                    suggestions.innerHTML = "Veuillez entrer un intérêt.";
-                    suggestions.classList.remove('hidden');
-                    return;
-                }
-                const prompt = `Suggérez 3 activités gratuites ou peu coûteuses à La Roche-sur-Yon pour un après-midi libre, axées sur : "${interest}". Donnez une brève description. Présentez en liste numérotée avec titres en gras.`;
-                callGemini(prompt, document.getElementById('activity-loader'), document.getElementById('activity-suggestions'));
+            
+            const themes = {
+                culture: "Visitez le **Musée de La Roche-sur-Yon**. Il offre un regard fascinant sur l'art et l'histoire de la région, de l'Antiquité à nos jours. Une excellente option pour un après-midi culturel.",
+                nature: "Faites une promenade relaxante le long des **rives de l'Yon**. C'est un chemin verdoyant et paisible au cœur de la ville, parfait pour se détendre et profiter de la nature.",
+                gourmandise: "Explorez le **Musée du Chocolat Gelencser**. Découvrez l'histoire du cacao et terminez par une dégustation. Une visite délicieuse pour les petits et grands gourmands."
+            };
+            const themesContainer = document.getElementById('themes-container');
+            const suggestionsContainer = document.getElementById('themes-suggestions');
+            themesContainer.addEventListener('click', (e) => {
+                const button = e.target.closest('.theme-button');
+                if (!button) return;
+                
+                themesContainer.querySelectorAll('.theme-button').forEach(btn => btn.classList.remove('active'));
+                button.classList.add('active');
+                
+                const theme = button.dataset.theme;
+                suggestionsContainer.innerHTML = `<div class="p-4 bg-amber-50 rounded-lg text-gray-800">${themes[theme]}</div>`;
             });
 
             // Initial load
