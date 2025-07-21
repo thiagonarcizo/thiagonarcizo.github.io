@@ -13,7 +13,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
     <!-- Chosen Palette: Warm Neutrals (Beige, Terracotta, Soft Gray) -->
     <!-- Application Structure Plan: A tab-based SPA with a main navigation bar to select the day (Dimanche-Mercredi) or a "Preparations" tab. This structure breaks the linear report into non-linear, user-selectable sections. The "Preparations" tab acts as a dashboard with budget chart, weather, events, and fun facts. Each day is a visual timeline with an interactive Leaflet map to provide real spatial context. -->
-    <!-- Visualization & Content Choices: 1. Report Info: Daily locations -> Goal: Organize/Spatialize -> Viz/Method: Interactive Leaflet.js Map -> Interaction: Hovering a timeline card opens the marker's popup -> Justification: Provides real, dynamic geographic context. 2. Report Info: Regional details -> Goal: Engage/Inform -> Viz/Method: "Le Saviez-vous ?" interactive cards -> Interaction: Click to reveal fun fact -> Justification: Gamifies learning. 3. Report Info: Current Weather -> Goal: Inform planning -> Viz/Method: Real-time WeatherAPI.com call -> Interaction: Automatic on load -> Justification: Demonstrates live data integration. 4. Report Info: Local specialties/activities -> Goal: Inform/Engage -> Viz/Method: Interactive clickable cards/buttons -> Interaction: Click to reveal pre-written content -> Justification: Replaces API calls with self-contained, interactive elements that still provide value and user choice. -->
+    <!-- Visualization & Content Choices: 1. Report Info: Daily locations -> Goal: Organize/Spatialize -> Viz/Method: Interactive Leaflet.js Map -> Interaction: Hovering a timeline card opens the marker's popup -> Justification: Provides real, dynamic geographic context. 2. Report Info: Regional details -> Goal: Engage/Inform -> Viz/Method: "Le Saviez-vous ?" interactive cards -> Interaction: Click to reveal fun fact -> Justification: Gamifies learning. 3. Report Info: Current Weather -> Goal: Inform planning -> Viz/Method: Real-time WeatherAPI.com call -> Interaction: Automatic on load -> Justification: Demonstrates live data integration. 4. Report Info: Local specialties/activities -> Goal: Inform/Engage -> Viz/Method: Interactive clickable cards/buttons, now with Google Search links -> Interaction: Click to reveal pre-written content or search on Google -> Justification: Adds external exploration capability without APIs and fixes formatting. -->
     <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
     <style>
         body {
@@ -41,6 +41,7 @@
             background-color: white;
             border-left: 4px solid #F59E0B; /* amber-500 */
             transition: transform 0.2s ease, box-shadow 0.2s ease;
+            position: relative;
         }
         .content-card:hover {
             transform: translateY(-4px);
@@ -101,6 +102,27 @@
             max-height: 0;
             overflow: hidden;
             transition: max-height 0.5s ease-out;
+        }
+        .search-button {
+            position: absolute;
+            top: 0.75rem;
+            right: 0.75rem;
+            background-color: #f3f4f6;
+            color: #374151;
+            border-radius: 9999px;
+            width: 2rem;
+            height: 2rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            text-decoration: none;
+            transition: all 0.2s ease-in-out;
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        }
+        .search-button:hover {
+            background-color: #e5e7eb;
+            transform: scale(1.1);
         }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
@@ -194,19 +216,18 @@
             </section>
 
             <section id="day1" class="content-section hidden space-y-6">
-                <!-- Day 1 cards -->
-                <div class="content-card p-5 rounded-lg shadow-sm"><h3 class="font-bold text-xl text-amber-800">17:00 🚆 Arrivée et Premiers Pas</h3><p class="mt-2 text-gray-700">Arrivée à la gare. Pour un besoin rapide, l'**Épicerie de la Gare** au 8 B Avenue Gambetta est votre premier arrêt stratégique.</p></div>
-                <div class="content-card p-5 rounded-lg shadow-sm"><h3 class="font-bold text-xl text-amber-800">17:30 🛍️ Vide-Grenier Dominical</h3><p class="mt-2 text-gray-700">Plongez dans l'ambiance locale avec le grand vide-grenier annuel. Une occasion parfaite et gratuite pour une première immersion authentique.</p></div>
-                <div class="content-card p-5 rounded-lg shadow-sm"><h3 class="font-bold text-xl text-amber-800">19:30 🍽️ Dîner Convivial</h3><p class="mt-2 text-gray-700">Direction **La Tribu Yonnaise**. Ouvert le dimanche, ce restaurant offre une cuisine maison, des tarifs accessibles et une ambiance chaleureuse. Pensez à réserver !</p></div>
-                <div class="content-card p-5 rounded-lg shadow-sm"><h3 class="font-bold text-xl text-amber-800">21:00 ✨ Magie sur la Place Napoléon</h3><p class="mt-2 text-gray-700">Promenade digestive vers la place centrale pour interagir avec les **Animaux de la Place**, des créatures mécaniques fascinantes. Une attraction gratuite et mémorable pour finir la soirée.</p></div>
+                <div class="content-card p-5 rounded-lg shadow-sm"><a href="https://www.google.com/search?q=Épicerie+de+la+Gare+La+Roche-sur-Yon" target="_blank" class="search-button" title="Rechercher sur Google"><span>🔍</span></a><h3 class="font-bold text-xl text-amber-800">17:00 🚆 Arrivée et Premiers Pas</h3><p class="mt-2 text-gray-700">Arrivée à la gare. Pour un besoin rapide, l'**Épicerie de la Gare** au 8 B Avenue Gambetta est votre premier arrêt stratégique.</p></div>
+                <div class="content-card p-5 rounded-lg shadow-sm"><a href="https://www.google.com/search?q=Vide-Grenier+La+Roche-sur-Yon" target="_blank" class="search-button" title="Rechercher sur Google"><span>🔍</span></a><h3 class="font-bold text-xl text-amber-800">17:30 🛍️ Vide-Grenier Dominical</h3><p class="mt-2 text-gray-700">Plongez dans l'ambiance locale avec le grand vide-grenier annuel. Une occasion parfaite et gratuite pour une première immersion authentique.</p></div>
+                <div class="content-card p-5 rounded-lg shadow-sm"><a href="https://www.google.com/search?q=La+Tribu+Yonnaise" target="_blank" class="search-button" title="Rechercher sur Google"><span>🔍</span></a><h3 class="font-bold text-xl text-amber-800">19:30 🍽️ Dîner Convivial</h3><p class="mt-2 text-gray-700">Direction **La Tribu Yonnaise**. Ouvert le dimanche, ce restaurant offre une cuisine maison, des tarifs accessibles et une ambiance chaleureuse. Pensez à réserver !</p></div>
+                <div class="content-card p-5 rounded-lg shadow-sm"><a href="https://www.google.com/search?q=Place+Napoléon+La+Roche-sur-Yon+Animaux" target="_blank" class="search-button" title="Rechercher sur Google"><span>🔍</span></a><h3 class="font-bold text-xl text-amber-800">21:00 ✨ Magie sur la Place Napoléon</h3><p class="mt-2 text-gray-700">Promenade digestive vers la place centrale pour interagir avec les **Animaux de la Place**, des créatures mécaniques fascinantes. Une attraction gratuite et mémorable pour finir la soirée.</p></div>
             </section>
 
             <section id="day2" class="content-section hidden">
                 <div class="grid md:grid-cols-2 gap-8">
                     <div class="space-y-6">
-                        <div data-marker="remblai" class="content-card p-5 rounded-lg shadow-sm cursor-pointer"><h3 class="font-bold text-xl text-amber-800">11:00 🚶 Balade Iconique</h3><p class="mt-2 text-gray-700">Marchez sur le **Remblai** qui longe la Grande Plage, puis perdez-vous dans les ruelles de l'**Île Penotte**.</p></div>
-                        <div data-marker="marche" class="content-card p-5 rounded-lg shadow-sm cursor-pointer"><h3 class="font-bold text-xl text-amber-800">12:30 🧺 Pique-nique sur la Plage</h3><p class="mt-2 text-gray-700">Faites vos provisions au **Marché Arago** pour un déjeuner économique avec une vue imprenable.</p></div>
-                        <div data-marker="chaume" class="content-card p-5 rounded-lg shadow-sm cursor-pointer"><h3 class="font-bold text-xl text-amber-800">14:00 ⛵ L'Âme de La Chaume</h3><p class="mt-2 text-gray-700">Prenez le "passeur" pour explorer **La Chaume**, le quartier des pêcheurs, et montez au **Prieuré Saint-Nicolas**.</p></div>
+                        <div data-marker="remblai" class="content-card p-5 rounded-lg shadow-sm cursor-pointer"><a href="https://www.google.com/search?q=Île+Penotte+Les+Sables-d'Olonne" target="_blank" class="search-button" title="Rechercher sur Google"><span>🔍</span></a><h3 class="font-bold text-xl text-amber-800">11:00 🚶 Balade Iconique</h3><p class="mt-2 text-gray-700">Marchez sur le **Remblai** qui longe la Grande Plage, puis perdez-vous dans les ruelles de l'**Île Penotte**.</p></div>
+                        <div data-marker="marche" class="content-card p-5 rounded-lg shadow-sm cursor-pointer"><a href="https://www.google.com/search?q=Marché+Arago+Les+Sables-d'Olonne" target="_blank" class="search-button" title="Rechercher sur Google"><span>🔍</span></a><h3 class="font-bold text-xl text-amber-800">12:30 🧺 Pique-nique sur la Plage</h3><p class="mt-2 text-gray-700">Faites vos provisions au **Marché Arago** pour un déjeuner économique avec une vue imprenable.</p></div>
+                        <div data-marker="chaume" class="content-card p-5 rounded-lg shadow-sm cursor-pointer"><a href="https://www.google.com/search?q=La+Chaume+Les+Sables-d'Olonne" target="_blank" class="search-button" title="Rechercher sur Google"><span>🔍</span></a><h3 class="font-bold text-xl text-amber-800">14:00 ⛵ L'Âme de La Chaume</h3><p class="mt-2 text-gray-700">Prenez le "passeur" pour explorer **La Chaume**, le quartier des pêcheurs, et montez au **Prieuré Saint-Nicolas**.</p></div>
                         <div data-marker="gareSables" class="content-card p-5 rounded-lg shadow-sm cursor-pointer"><h3 class="font-bold text-xl text-amber-800">17:30 🚆 Retour</h3><p class="mt-2 text-gray-700">Reprenez le train vers La Roche-sur-Yon depuis la gare des Sables-d'Olonne.</p></div>
                     </div>
                     <div class="sticky top-8">
@@ -219,9 +240,9 @@
             <section id="day3" class="content-section hidden">
                  <div class="grid md:grid-cols-2 gap-8">
                     <div class="space-y-6">
-                        <div data-marker="haras" class="content-card p-5 rounded-lg shadow-sm cursor-pointer"><h3 class="font-bold text-xl text-amber-800">10:00 🐎 Culture Équestre</h3><p class="mt-2 text-gray-700">Visite du **Haras de la Vendée**. Explorez ce site de 4,5 hectares, visitez les écuries et assistez aux animations. (Entrée : 10€).</p></div>
-                        <div data-marker="bus" class="content-card p-5 rounded-lg shadow-sm cursor-pointer"><h3 class="font-bold text-xl text-amber-800">14:30 🚌 Trésors du Bocage</h3><p class="mt-2 text-gray-700">Excursion en bus Aléop vers **La Chaize-le-Vicomte** depuis la gare routière pour découvrir un village vendéen.</p></div>
-                        <div data-marker="concert" class="content-card p-5 rounded-lg shadow-sm cursor-pointer"><h3 class="font-bold text-xl text-amber-800">21:00 🎶 Soirée en Musique</h3><p class="mt-2 text-gray-700">Ne manquez pas la **Veillée Chromatique**, un concert gratuit en plein air pour vivre une soirée estivale comme un local.</p></div>
+                        <div data-marker="haras" class="content-card p-5 rounded-lg shadow-sm cursor-pointer"><a href="https://www.google.com/search?q=Haras+de+la+Vendée" target="_blank" class="search-button" title="Rechercher sur Google"><span>🔍</span></a><h3 class="font-bold text-xl text-amber-800">10:00 🐎 Culture Équestre</h3><p class="mt-2 text-gray-700">Visite du **Haras de la Vendée**. Explorez ce site de 4,5 hectares, visitez les écuries et assistez aux animations. (Entrée : 10€).</p></div>
+                        <div data-marker="chaize" class="content-card p-5 rounded-lg shadow-sm cursor-pointer"><a href="https://www.google.com/search?q=La+Chaize-le-Vicomte" target="_blank" class="search-button" title="Rechercher sur Google"><span>🔍</span></a><h3 class="font-bold text-xl text-amber-800">14:30 🚌 Trésors du Bocage</h3><p class="mt-2 text-gray-700">Excursion en bus Aléop vers **La Chaize-le-Vicomte** depuis la gare routière pour découvrir un village vendéen.</p></div>
+                        <div data-marker="concert" class="content-card p-5 rounded-lg shadow-sm cursor-pointer"><a href="https://www.google.com/search?q=Veillée+Chromatique+La+Roche-sur-Yon" target="_blank" class="search-button" title="Rechercher sur Google"><span>🔍</span></a><h3 class="font-bold text-xl text-amber-800">21:00 🎶 Soirée en Musique</h3><p class="mt-2 text-gray-700">Ne manquez pas la **Veillée Chromatique**, un concert gratuit en plein air pour vivre une soirée estivale comme un local.</p></div>
                     </div>
                     <div class="sticky top-8">
                         <h3 class="text-xl font-bold text-amber-700 mb-4 text-center">Carte de La Roche-sur-Yon & Alentours</h3>
@@ -232,6 +253,7 @@
 
             <section id="day4" class="content-section hidden space-y-6">
                 <div class="content-card p-5 rounded-lg shadow-sm">
+                    <a href="https://www.google.com/search?q=Marché+de+la+Garenne+La+Roche-sur-Yon" target="_blank" class="search-button" title="Rechercher sur Google"><span>🔍</span></a>
                     <h3 class="font-bold text-xl text-amber-800">09:00 🥕 Marché et Spécialités</h3>
                     <p class="mt-2 text-gray-700">Visite du **Marché de la Garenne** pour une dernière dose de produits locaux. Cliquez pour découvrir quelques spécialités à ne pas manquer :</p>
                     <div id="specialties-container" class="mt-4 space-y-2">
@@ -337,8 +359,8 @@
 
                     const todayForecast = data.forecast.forecastday[0];
                     const currentTemp = data.current.temp_c;
-                    const todayEmoji = getWeatherEmoji(todayForecast.day.condition.code);
-                    const todayCard = `<div class="weather-card"><h4 class="font-bold text-lg">Aujourd'hui</h4><p class="text-4xl my-2">${todayEmoji}</p><p class="font-semibold text-2xl">${currentTemp}°C</p><p class="text-gray-600">Max: ${todayForecast.day.maxtemp_c}°C / Min: ${todayForecast.day.mintemp_c}°C</p><p class="text-sm italic">${todayForecast.day.condition.text}</p></div>`;
+                    const todayEmoji = getWeatherEmoji(data.current.condition.code);
+                    const todayCard = `<div class="weather-card"><h4 class="font-bold text-lg">Aujourd'hui</h4><p class="text-4xl my-2">${todayEmoji}</p><p class="font-semibold text-2xl">${currentTemp}°C</p><p class="text-gray-600">Max: ${todayForecast.day.maxtemp_c}°C / Min: ${todayForecast.day.mintemp_c}°C</p><p class="text-sm italic">${data.current.condition.text}</p></div>`;
                     forecastContainer.innerHTML += todayCard;
 
                     const tomorrowForecast = data.forecast.forecastday[1];
@@ -448,19 +470,30 @@
             specialties.forEach(item => {
                 const specialtyEl = document.createElement('div');
                 specialtyEl.className = 'specialty-item p-3 rounded';
-                specialtyEl.innerHTML = `<div class="font-semibold flex justify-between items-center"><span>${item.name}</span><span>+</span></div><div class="description pt-2 text-sm text-gray-700">${item.desc}</div>`;
+                specialtyEl.innerHTML = `<div class="font-semibold flex justify-between items-center"><span>${item.name}</span><span class="transform transition-transform duration-300">+</span></div><div class="description pt-2 text-sm text-gray-700">${item.desc}</div>`;
                 specialtyEl.addEventListener('click', (e) => {
                     const desc = e.currentTarget.querySelector('.description');
+                    const icon = e.currentTarget.querySelector('span:last-child');
                     const isOpen = desc.style.maxHeight && desc.style.maxHeight !== '0px';
                     desc.style.maxHeight = isOpen ? '0px' : `${desc.scrollHeight}px`;
+                    icon.style.transform = isOpen ? 'rotate(0deg)' : 'rotate(45deg)';
                 });
                 specialtiesContainer.appendChild(specialtyEl);
             });
             
             const themes = {
-                culture: "Visitez le **Musée de La Roche-sur-Yon**. Il offre un regard fascinant sur l'art et l'histoire de la région, de l'Antiquité à nos jours. Une excellente option pour un après-midi culturel.",
-                nature: "Faites une promenade relaxante le long des **rives de l'Yon**. C'est un chemin verdoyant et paisible au cœur de la ville, parfait pour se détendre et profiter de la nature.",
-                gourmandise: "Explorez le **Musée du Chocolat Gelencser**. Découvrez l'histoire du cacao et terminez par une dégustation. Une visite délicieuse pour les petits et grands gourmands."
+                culture: {
+                    text: "Visitez le **Musée de La Roche-sur-Yon**. Il offre un regard fascinant sur l'art et l'histoire de la région, de l'Antiquité à nos jours. Une excellente option pour un après-midi culturel.",
+                    searchTerm: "Musée de La Roche-sur-Yon"
+                },
+                nature: {
+                    text: "Faites une promenade relaxante le long des **rives de l'Yon**. C'est un chemin verdoyant et paisible au cœur de la ville, parfait pour se détendre et profiter de la nature.",
+                    searchTerm: "Rives de l'Yon La Roche-sur-Yon"
+                },
+                gourmandise: {
+                    text: "Explorez le **Musée du Chocolat Gelencser**. Découvrez l'histoire du cacao et terminez par une dégustation. Une visite délicieuse pour les petits et grands gourmands.",
+                    searchTerm: "Musée du Chocolat Gelencser"
+                }
             };
             const themesContainer = document.getElementById('themes-container');
             const suggestionsContainer = document.getElementById('themes-suggestions');
@@ -472,7 +505,16 @@
                 button.classList.add('active');
                 
                 const theme = button.dataset.theme;
-                suggestionsContainer.innerHTML = `<div class="p-4 bg-amber-50 rounded-lg text-gray-800">${themes[theme]}</div>`;
+                const themeData = themes[theme];
+                let suggestionText = themeData.text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+                const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(themeData.searchTerm)}`;
+                suggestionsContainer.innerHTML = `
+                    <div class="relative p-4 bg-amber-50 rounded-lg text-gray-800">
+                        ${suggestionText}
+                        <a href="${searchUrl}" target="_blank" class="search-button" title="Rechercher sur Google">
+                            <span class="text-base">🔍</span>
+                        </a>
+                    </div>`;
             });
 
             // Initial load
