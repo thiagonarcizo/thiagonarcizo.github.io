@@ -105,3 +105,4 @@ No Console Firebase > Realtime Database > Regras:
 ---
 
 **⚠️ Lembre-se**: Nunca commite credenciais sensíveis! Use sempre o arquivo de configuração externo.
+# Vendée Trip - Deploy configurado com sucesso! 🏖️
