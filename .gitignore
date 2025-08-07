@@ -1,5 +1,6 @@
 # Credenciais Firebase (NUNCA commitar!)
 firebase-config.js
+NETLIFY_ENV_VARS.md
 
 # Outros arquivos sensíveis
 *.env
