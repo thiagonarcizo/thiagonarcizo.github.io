@@ -1,0 +1,29 @@
+# Credenciais Firebase (NUNCA commitar!)
+firebase-config.js
+
+# Outros arquivos sensíveis
+*.env
+*.env.local
+*.env.production
+config.js
+
+# Build artifacts
+dist/
+.netlify/
+.vercel/
+
+# Logs
+*.log
+npm-debug.log*
+*.log.*
+
+# Arquivos temporários
+.DS_Store
+Thumbs.db
+.cache/
+
+# Arquivos de teste (remova se quiser commitar)
+test-firebase.html
+
+# Node modules
+node_modules/

@@ -1,0 +1,17 @@
+[build]
+  publish = "."
+  command = "node build-config.js"
+
+[build.environment]
+  NODE_VERSION = "18"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-XSS-Protection = "1; mode=block"
+    X-Content-Type-Options = "nosniff"
+    Cache-Control = "public, max-age=3600"
+
+# As variáveis de ambiente serão configuradas na interface do Netlify
+# NÃO coloque credenciais aqui!

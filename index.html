@@ -1,0 +1,1562 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vendée Trip - Planificateur de Voyage</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Firebase Configuration (carregado dinamicamente) -->
+    <script>
+        // Função para carregar config de variáveis de ambiente (produção)
+        function loadConfigFromEnv() {
+            console.log('Carregando configuração de variáveis de ambiente...');
+            window.firebaseConfig = {
+                apiKey: "{{FIREBASE_API_KEY}}",
+                authDomain: "{{FIREBASE_AUTH_DOMAIN}}",
+                databaseURL: "{{FIREBASE_DATABASE_URL}}",
+                projectId: "{{FIREBASE_PROJECT_ID}}",
+                storageBucket: "{{FIREBASE_STORAGE_BUCKET}}",
+                messagingSenderId: "{{FIREBASE_MESSAGING_SENDER_ID}}",
+                appId: "{{FIREBASE_APP_ID}}",
+                measurementId: "{{FIREBASE_MEASUREMENT_ID}}"
+            };
+        }
+    </script>
+    <script src="firebase-config.js" onerror="loadConfigFromEnv()"></script>
+    
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getDatabase, ref, push, set, remove, onValue, off } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
+        
+        // Firebase configuration carregada do arquivo externo firebase-config.js
+        // As credenciais estão em um arquivo separado que não é commitado no Git
+        const firebaseConfig = window.firebaseConfig;
+
+        // Initialize Firebase
+        let app, database;
+        try {
+            app = initializeApp(firebaseConfig);
+            database = getDatabase(app);
+            window.firebaseDB = database;
+            window.firebaseRef = ref;
+            window.firebasePush = push;
+            window.firebaseSet = set;
+            window.firebaseRemove = remove;
+            window.firebaseOnValue = onValue;
+            window.firebaseOff = off;
+            console.log('Firebase initialized successfully');
+        } catch (error) {
+            console.warn('Firebase initialization failed, falling back to local storage:', error);
+            window.firebaseDB = null;
+        }
+    </script>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        vendee: {
+                            50: '#fef7ed',
+                            100: '#fdebd0',
+                            200: '#fbd4a1',
+                            300: '#f8b462',
+                            400: '#f59e0b',
+                            500: '#d97706',
+                            600: '#b45309',
+                            700: '#92400e',
+                            800: '#78350f',
+                            900: '#451a03'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #fef7ed 0%, #fed7aa 100%);
+            min-height: 100vh;
+        }
+        
+        .glass-card {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .gradient-text {
+            background: linear-gradient(135deg, #d97706, #f59e0b);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .floating {
+            animation: float 3s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.5s ease-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #d97706, #f59e0b);
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(217, 119, 6, 0.3);
+        }
+        
+        .plan-card {
+            transition: all 0.3s ease;
+            border-left: 4px solid #f59e0b;
+        }
+        
+        .plan-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+        }
+        
+        .cost-item {
+            transition: all 0.2s ease;
+        }
+        
+        .cost-item:hover {
+            background-color: #fef7ed;
+        }
+        
+        .weather-card {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(147, 197, 253, 0.1));
+        }
+        
+        .tab-button {
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        
+        .tab-button.active::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(135deg, #d97706, #f59e0b);
+            border-radius: 2px;
+        }
+        
+        .modal-backdrop {
+            backdrop-filter: blur(5px);
+            background: rgba(0, 0, 0, 0.3);
+        }
+        
+        @media (max-width: 768px) {
+            .mobile-padding {
+                padding-left: 1rem;
+                padding-right: 1rem;
+            }
+        }
+        
+        .user-avatar {
+            background: linear-gradient(135deg, #d97706, #f59e0b);
+        }
+        
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            transform: translateX(400px);
+            transition: transform 0.3s ease;
+        }
+        
+        .notification.show {
+            transform: translateX(0);
+        }
+        
+        .sync-indicator {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 999;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        
+        .sync-indicator.online {
+            background: #10b981;
+            color: white;
+        }
+        
+        .sync-indicator.offline {
+            background: #f59e0b;
+            color: white;
+        }
+        
+        .sync-indicator.syncing {
+            background: #3b82f6;
+            color: white;
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        
+        .live-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background: #10b981;
+            border-radius: 50%;
+            margin-right: 8px;
+            animation: blink 2s ease-in-out infinite;
+        }
+        
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+    </style>
+</head>
+<body class="antialiased">
+    <!-- Sync Status Indicator -->
+    <div id="sync-indicator" class="sync-indicator offline">
+        📶 Mode Local
+    </div>
+
+    <!-- Notification System -->
+    <div id="notification" class="notification bg-white shadow-lg rounded-lg p-4 border-l-4 border-green-500">
+        <div class="flex items-center">
+            <div class="flex-shrink-0">
+                <span class="text-green-500">✅</span>
+            </div>
+            <div class="ml-3">
+                <p id="notification-text" class="text-sm font-medium text-gray-900"></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Login Screen -->
+    <div id="login-screen" class="min-h-screen flex items-center justify-center p-4">
+        <div class="glass-card rounded-2xl shadow-2xl p-8 w-full max-w-md">
+            <div class="text-center mb-8">
+                <div class="floating">
+                    <div class="w-20 h-20 mx-auto mb-4 bg-gradient-to-br from-vendee-400 to-vendee-600 rounded-full flex items-center justify-center text-white text-3xl">
+                        🏖️
+                    </div>
+                </div>
+                <h1 class="text-3xl font-bold gradient-text mb-2">Vendée Trip</h1>
+                <p class="text-gray-600">Planifiez votre escapade ensemble</p>
+                <p class="text-sm text-gray-500 mt-2">10-13 Août 2025</p>
+                <div class="flex items-center justify-center mt-3 text-xs text-gray-500">
+                    <div class="live-indicator"></div>
+                    <span>Synchronisation en temps réel</span>
+                </div>
+            </div>
+            
+            <!-- User Selection -->
+            <div id="user-selection" class="space-y-4 mb-6">
+                <h2 class="text-xl font-semibold text-center text-gray-800 mb-4">Qui êtes-vous ?</h2>
+                <div class="grid grid-cols-2 gap-4">
+                    <button onclick="selectUser('thiago')" class="user-select-btn p-4 rounded-xl border-2 border-gray-200 hover:border-vendee-400 transition-all duration-300 text-center">
+                        <div class="text-3xl mb-2">👨‍💻</div>
+                        <div class="font-semibold">Thiago</div>
+                    </button>
+                    <button onclick="selectUser('laurine')" class="user-select-btn p-4 rounded-xl border-2 border-gray-200 hover:border-vendee-400 transition-all duration-300 text-center">
+                        <div class="text-3xl mb-2">👩‍💼</div>
+                        <div class="font-semibold">Laurine</div>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Password Input -->
+            <div id="password-section" class="hidden">
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Mot de passe pour <span id="selected-user-name" class="font-semibold"></span>
+                    </label>
+                    <input type="password" id="password-input" 
+                           class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-vendee-400 focus:border-transparent outline-none transition-all"
+                           placeholder="Entrez votre mot de passe">
+                </div>
+                
+                <div class="mb-6">
+                    <label class="flex items-center">
+                        <input type="checkbox" id="remember-me" class="rounded border-gray-300 text-vendee-500 focus:ring-vendee-400">
+                        <span class="ml-2 text-sm text-gray-600">Se souvenir de moi</span>
+                    </label>
+                </div>
+                
+                <button onclick="login()" class="btn-primary w-full py-3 px-4 rounded-xl text-white font-semibold">
+                    Se connecter
+                </button>
+                
+                <button onclick="goBack()" class="w-full mt-3 py-2 text-gray-600 hover:text-gray-800 transition-colors">
+                    ← Retour
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main App -->
+    <div id="main-app" class="hidden min-h-screen">
+        <!-- Header -->
+        <header class="glass-card shadow-lg">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between items-center py-4">
+                    <div class="flex items-center space-x-4">
+                        <div class="text-2xl">🏖️</div>
+                        <div>
+                            <h1 class="text-2xl font-bold gradient-text">Vendée Trip</h1>
+                            <p class="text-sm text-gray-600">10-13 Août 2025</p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center space-x-4">
+                        <!-- Weather Widget -->
+                        <div id="weather-widget" class="hidden lg:block weather-card rounded-lg px-4 py-2">
+                            <div class="flex items-center space-x-2">
+                                <div id="weather-icon" class="text-2xl"></div>
+                                <div>
+                                    <div id="weather-temp" class="font-semibold"></div>
+                                    <div id="weather-desc" class="text-xs text-gray-600"></div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- User Profile -->
+                        <div class="flex items-center space-x-3">
+                            <div class="user-avatar w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold">
+                                <span id="user-initial"></span>
+                            </div>
+                            <div class="hidden sm:block">
+                                <div id="current-user" class="font-semibold text-gray-800"></div>
+                                <div class="text-xs text-gray-600">
+                                    <div class="live-indicator"></div>
+                                    En ligne
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <button onclick="logout()" class="text-gray-600 hover:text-gray-800 transition-colors p-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Navigation Tabs -->
+        <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
+            <div class="flex space-x-1 bg-white rounded-xl p-1 shadow-lg">
+                <button onclick="switchTab('plans')" class="tab-button active flex-1 py-3 px-4 rounded-lg font-medium text-center transition-all">
+                    📅 Plans
+                </button>
+                <button onclick="switchTab('costs')" class="tab-button flex-1 py-3 px-4 rounded-lg font-medium text-center transition-all">
+                    💰 Dépenses
+                </button>
+                <button onclick="switchTab('weather')" class="tab-button flex-1 py-3 px-4 rounded-lg font-medium text-center transition-all">
+                    🌤️ Météo
+                </button>
+                <button onclick="switchTab('overview')" class="tab-button flex-1 py-3 px-4 rounded-lg font-medium text-center transition-all">
+                    📊 Aperçu
+                </button>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            
+            <!-- Plans Tab -->
+            <div id="plans-tab" class="tab-content">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 space-y-4 sm:space-y-0">
+                    <h2 class="text-2xl font-bold text-gray-800">Nos Plans de Voyage</h2>
+                    <button onclick="openAddPlanModal()" class="btn-primary px-6 py-3 rounded-xl text-white font-semibold flex items-center space-x-2">
+                        <span>+</span>
+                        <span>Ajouter un Plan</span>
+                    </button>
+                </div>
+                
+                <!-- Day Filter -->
+                <div class="mb-6">
+                    <div class="flex flex-wrap gap-2">
+                        <button onclick="filterPlans('all')" class="filter-btn active px-4 py-2 rounded-full bg-vendee-100 text-vendee-800 font-medium transition-all">
+                            Tous les jours
+                        </button>
+                        <button onclick="filterPlans('2025-08-10')" class="filter-btn px-4 py-2 rounded-full bg-gray-100 text-gray-700 font-medium transition-all">
+                            Dim 10
+                        </button>
+                        <button onclick="filterPlans('2025-08-11')" class="filter-btn px-4 py-2 rounded-full bg-gray-100 text-gray-700 font-medium transition-all">
+                            Lun 11
+                        </button>
+                        <button onclick="filterPlans('2025-08-12')" class="filter-btn px-4 py-2 rounded-full bg-gray-100 text-gray-700 font-medium transition-all">
+                            Mar 12
+                        </button>
+                        <button onclick="filterPlans('2025-08-13')" class="filter-btn px-4 py-2 rounded-full bg-gray-100 text-gray-700 font-medium transition-all">
+                            Mer 13
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Plans List -->
+                <div id="plans-list" class="space-y-4">
+                    <!-- Plans will be dynamically loaded here -->
+                </div>
+                
+                <!-- Empty State -->
+                <div id="plans-empty" class="hidden text-center py-12">
+                    <div class="text-6xl mb-4">📅</div>
+                    <h3 class="text-xl font-semibold text-gray-800 mb-2">Aucun plan pour le moment</h3>
+                    <p class="text-gray-600 mb-6">Commencez à planifier votre escapade en Vendée !</p>
+                    <button onclick="openAddPlanModal()" class="btn-primary px-6 py-3 rounded-xl text-white font-semibold">
+                        Créer le premier plan
+                    </button>
+                </div>
+            </div>
+
+            <!-- Costs Tab -->
+            <div id="costs-tab" class="tab-content hidden">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 space-y-4 sm:space-y-0">
+                    <h2 class="text-2xl font-bold text-gray-800">Gestion des Dépenses</h2>
+                    <button onclick="openAddCostModal()" class="btn-primary px-6 py-3 rounded-xl text-white font-semibold flex items-center space-x-2">
+                        <span>+</span>
+                        <span>Ajouter une Dépense</span>
+                    </button>
+                </div>
+                
+                <!-- Cost Summary -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                    <div class="glass-card rounded-xl p-6">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-gray-600">Total Thiago</p>
+                                <p id="thiago-total" class="text-2xl font-bold text-vendee-600">0,00 €</p>
+                            </div>
+                            <div class="text-3xl">👨‍💻</div>
+                        </div>
+                    </div>
+                    <div class="glass-card rounded-xl p-6">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-gray-600">Total Laurine</p>
+                                <p id="laurine-total" class="text-2xl font-bold text-vendee-600">0,00 €</p>
+                            </div>
+                            <div class="text-3xl">👩‍💼</div>
+                        </div>
+                    </div>
+                    <div class="glass-card rounded-xl p-6">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-gray-600">Total Général</p>
+                                <p id="total-costs" class="text-2xl font-bold text-vendee-600">0,00 €</p>
+                            </div>
+                            <div class="text-3xl">💰</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Costs List -->
+                <div class="glass-card rounded-xl p-6">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-4">Historique des Dépenses</h3>
+                    <div id="costs-list" class="space-y-3">
+                        <!-- Costs will be dynamically loaded here -->
+                    </div>
+                    
+                    <!-- Empty State -->
+                    <div id="costs-empty" class="hidden text-center py-8">
+                        <div class="text-4xl mb-4">💸</div>
+                        <h3 class="text-lg font-semibold text-gray-800 mb-2">Aucune dépense enregistrée</h3>
+                        <p class="text-gray-600">Ajoutez vos dépenses pour suivre votre budget</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Weather Tab -->
+            <div id="weather-tab" class="tab-content hidden">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6">Prévisions Météo</h2>
+                
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- Current Weather -->
+                    <div class="glass-card rounded-xl p-6">
+                        <h3 class="text-lg font-semibold text-gray-800 mb-4">Météo Actuelle - La Roche-sur-Yon</h3>
+                        <div id="current-weather" class="text-center">
+                            <div id="weather-loader" class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-vendee-500"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- 4-Day Forecast -->
+                    <div class="glass-card rounded-xl p-6">
+                        <h3 class="text-lg font-semibold text-gray-800 mb-4">Prévisions 4 Jours</h3>
+                        <div id="forecast-weather" class="space-y-3">
+                            <!-- Forecast will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Overview Tab -->
+            <div id="overview-tab" class="tab-content hidden">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6">Aperçu du Voyage</h2>
+                
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <!-- Plans Summary -->
+                    <div class="glass-card rounded-xl p-6">
+                        <h3 class="text-lg font-semibold text-gray-800 mb-4">Résumé des Plans</h3>
+                        <div id="plans-summary" class="space-y-4">
+                            <!-- Plans summary will be loaded here -->
+                        </div>
+                    </div>
+                    
+                    <!-- Costs Chart -->
+                    <div class="glass-card rounded-xl p-6">
+                        <h3 class="text-lg font-semibold text-gray-800 mb-4">Répartition des Dépenses</h3>
+                        <div class="relative h-64">
+                            <canvas id="costs-chart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Add Plan Modal -->
+    <div id="add-plan-modal" class="hidden fixed inset-0 modal-backdrop z-50 flex items-center justify-center p-4">
+        <div class="glass-card rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-xl font-bold text-gray-800">Ajouter un Plan</h3>
+                    <button onclick="closeAddPlanModal()" class="text-gray-500 hover:text-gray-700">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+                
+                <form id="add-plan-form" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Jour *</label>
+                        <select id="plan-day" required class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-vendee-400 focus:border-transparent outline-none">
+                            <option value="">Sélectionner un jour</option>
+                            <option value="2025-08-10">Dimanche 10 Août</option>
+                            <option value="2025-08-11">Lundi 11 Août</option>
+                            <option value="2025-08-12">Mardi 12 Août</option>
+                            <option value="2025-08-13">Mercredi 13 Août</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Heure</label>
+                        <input type="time" id="plan-time" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-vendee-400 focus:border-transparent outline-none">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Description *</label>
+                        <textarea id="plan-description" required rows="3" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-vendee-400 focus:border-transparent outline-none resize-none" placeholder="Décrivez votre plan..."></textarea>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Lieu</label>
+                        <input type="text" id="plan-location" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-vendee-400 focus:border-transparent outline-none" placeholder="Nom du lieu ou adresse">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Coût estimé</label>
+                        <div class="relative">
+                            <input type="number" id="plan-cost" step="0.01" min="0" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-vendee-400 focus:border-transparent outline-none" placeholder="0.00">
+                            <span class="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-500">€</span>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Catégorie</label>
+                        <select id="plan-category" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-vendee-400 focus:border-transparent outline-none">
+                            <option value="">Sélectionner une catégorie</option>
+                            <option value="restaurant">🍽️ Restaurant</option>
+                            <option value="visite">🏛️ Visite</option>
+                            <option value="transport">🚗 Transport</option>
+                            <option value="shopping">🛍️ Shopping</option>
+                            <option value="detente">🏖️ Détente</option>
+                            <option value="autre">📝 Autre</option>
+                        </select>
+                    </div>
+                    
+                    <div class="flex space-x-3 pt-4">
+                        <button type="button" onclick="closeAddPlanModal()" class="flex-1 py-3 px-4 border border-gray-300 rounded-xl font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+                            Annuler
+                        </button>
+                        <button type="submit" class="flex-1 btn-primary py-3 px-4 rounded-xl text-white font-medium">
+                            Ajouter
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Cost Modal -->
+    <div id="add-cost-modal" class="hidden fixed inset-0 modal-backdrop z-50 flex items-center justify-center p-4">
+        <div class="glass-card rounded-2xl shadow-2xl w-full max-w-md">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-xl font-bold text-gray-800">Ajouter une Dépense</h3>
+                    <button onclick="closeAddCostModal()" class="text-gray-500 hover:text-gray-700">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+                
+                <form id="add-cost-form" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Description *</label>
+                        <input type="text" id="cost-description" required class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-vendee-400 focus:border-transparent outline-none" placeholder="Description de la dépense">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Montant *</label>
+                        <div class="relative">
+                            <input type="number" id="cost-amount" required step="0.01" min="0" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-vendee-400 focus:border-transparent outline-none" placeholder="0.00">
+                            <span class="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-500">€</span>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Catégorie</label>
+                        <select id="cost-category" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-vendee-400 focus:border-transparent outline-none">
+                            <option value="nourriture">🍽️ Nourriture</option>
+                            <option value="transport">🚗 Transport</option>
+                            <option value="logement">🏨 Logement</option>
+                            <option value="activites">🎯 Activités</option>
+                            <option value="shopping">🛍️ Shopping</option>
+                            <option value="autre">📝 Autre</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Date</label>
+                        <input type="date" id="cost-date" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-vendee-400 focus:border-transparent outline-none">
+                    </div>
+                    
+                    <div class="flex space-x-3 pt-4">
+                        <button type="button" onclick="closeAddCostModal()" class="flex-1 py-3 px-4 border border-gray-300 rounded-xl font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+                            Annuler
+                        </button>
+                        <button type="submit" class="flex-1 btn-primary py-3 px-4 rounded-xl text-white font-medium">
+                            Ajouter
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Plan Modal -->
+    <div id="edit-plan-modal" class="hidden fixed inset-0 modal-backdrop z-50 flex items-center justify-center p-4">
+        <div class="glass-card rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-xl font-bold text-gray-800">Modifier le Plan</h3>
+                    <button onclick="closeEditPlanModal()" class="text-gray-500 hover:text-gray-700">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+                
+                <form id="edit-plan-form" class="space-y-4">
+                    <input type="hidden" id="edit-plan-id">
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Jour *</label>
+                        <select id="edit-plan-day" required class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-vendee-400 focus:border-transparent outline-none">
+                            <option value="">Sélectionner un jour</option>
+                            <option value="2025-08-10">Dimanche 10 Août</option>
+                            <option value="2025-08-11">Lundi 11 Août</option>
+                            <option value="2025-08-12">Mardi 12 Août</option>
+                            <option value="2025-08-13">Mercredi 13 Août</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Heure</label>
+                        <input type="time" id="edit-plan-time" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-vendee-400 focus:border-transparent outline-none">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Description *</label>
+                        <textarea id="edit-plan-description" required rows="3" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-vendee-400 focus:border-transparent outline-none resize-none"></textarea>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Lieu</label>
+                        <input type="text" id="edit-plan-location" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-vendee-400 focus:border-transparent outline-none">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Coût estimé</label>
+                        <div class="relative">
+                            <input type="number" id="edit-plan-cost" step="0.01" min="0" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-vendee-400 focus:border-transparent outline-none">
+                            <span class="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-500">€</span>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Catégorie</label>
+                        <select id="edit-plan-category" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-vendee-400 focus:border-transparent outline-none">
+                            <option value="">Sélectionner une catégorie</option>
+                            <option value="restaurant">🍽️ Restaurant</option>
+                            <option value="visite">🏛️ Visite</option>
+                            <option value="transport">🚗 Transport</option>
+                            <option value="shopping">🛍️ Shopping</option>
+                            <option value="detente">🏖️ Détente</option>
+                            <option value="autre">📝 Autre</option>
+                        </select>
+                    </div>
+                    
+                    <div class="flex space-x-3 pt-4">
+                        <button type="button" onclick="closeEditPlanModal()" class="flex-1 py-3 px-4 border border-gray-300 rounded-xl font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+                            Annuler
+                        </button>
+                        <button type="submit" class="flex-1 btn-primary py-3 px-4 rounded-xl text-white font-medium">
+                            Sauvegarder
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global Variables
+        let currentUser = null;
+        let currentFilter = 'all';
+        let plans = [];
+        let costs = [];
+        let costsChart = null;
+        let isOnline = false;
+        let plansListener = null;
+        let costsListener = null;
+
+        // User Authentication
+        const users = {
+            thiago: { password: 'tvendee2025', name: 'Thiago', avatar: '👨‍💻' },
+            laurine: { password: 'lvendee2025', name: 'Laurine', avatar: '👩‍💼' }
+        };
+
+        // Database Management
+        class DatabaseManager {
+            constructor() {
+                this.isFirebaseAvailable = !!window.firebaseDB;
+                this.updateSyncStatus();
+            }
+
+            updateSyncStatus() {
+                const indicator = document.getElementById('sync-indicator');
+                if (this.isFirebaseAvailable) {
+                    indicator.className = 'sync-indicator online';
+                    indicator.innerHTML = '🔄 Synchronisé';
+                    isOnline = true;
+                } else {
+                    indicator.className = 'sync-indicator offline';
+                    indicator.innerHTML = '📱 Mode Local';
+                    isOnline = false;
+                }
+            }
+
+            async savePlan(plan) {
+                if (this.isFirebaseAvailable) {
+                    try {
+                        const planRef = window.firebaseRef(window.firebaseDB, `plans/${plan.id}`);
+                        await window.firebaseSet(planRef, plan);
+                        this.setSyncStatus('syncing');
+                        setTimeout(() => this.updateSyncStatus(), 1000);
+                    } catch (error) {
+                        console.error('Firebase save error:', error);
+                        this.fallbackToLocal('plans', plans);
+                    }
+                } else {
+                    this.fallbackToLocal('plans', plans);
+                }
+            }
+
+            async deletePlan(planId) {
+                if (this.isFirebaseAvailable) {
+                    try {
+                        const planRef = window.firebaseRef(window.firebaseDB, `plans/${planId}`);
+                        await window.firebaseRemove(planRef);
+                        this.setSyncStatus('syncing');
+                        setTimeout(() => this.updateSyncStatus(), 1000);
+                    } catch (error) {
+                        console.error('Firebase delete error:', error);
+                        this.fallbackToLocal('plans', plans);
+                    }
+                } else {
+                    this.fallbackToLocal('plans', plans);
+                }
+            }
+
+            async saveCost(cost) {
+                if (this.isFirebaseAvailable) {
+                    try {
+                        const costRef = window.firebaseRef(window.firebaseDB, `costs/${cost.id}`);
+                        await window.firebaseSet(costRef, cost);
+                        this.setSyncStatus('syncing');
+                        setTimeout(() => this.updateSyncStatus(), 1000);
+                    } catch (error) {
+                        console.error('Firebase save error:', error);
+                        this.fallbackToLocal('costs', costs);
+                    }
+                } else {
+                    this.fallbackToLocal('costs', costs);
+                }
+            }
+
+            async deleteCost(costId) {
+                if (this.isFirebaseAvailable) {
+                    try {
+                        const costRef = window.firebaseRef(window.firebaseDB, `costs/${costId}`);
+                        await window.firebaseRemove(costRef);
+                        this.setSyncStatus('syncing');
+                        setTimeout(() => this.updateSyncStatus(), 1000);
+                    } catch (error) {
+                        console.error('Firebase delete error:', error);
+                        this.fallbackToLocal('costs', costs);
+                    }
+                } else {
+                    this.fallbackToLocal('costs', costs);
+                }
+            }
+
+            setupRealtimeListeners() {
+                if (!this.isFirebaseAvailable) {
+                    // Load from localStorage if Firebase not available
+                    plans = JSON.parse(localStorage.getItem('vendee-plans') || '[]');
+                    costs = JSON.parse(localStorage.getItem('vendee-costs') || '[]');
+                    return;
+                }
+
+                // Listen to plans changes
+                const plansRef = window.firebaseRef(window.firebaseDB, 'plans');
+                plansListener = window.firebaseOnValue(plansRef, (snapshot) => {
+                    const data = snapshot.val();
+                    plans = data ? Object.values(data) : [];
+                    loadPlans();
+                    updateOverview();
+                });
+
+                // Listen to costs changes
+                const costsRef = window.firebaseRef(window.firebaseDB, 'costs');
+                costsListener = window.firebaseOnValue(costsRef, (snapshot) => {
+                    const data = snapshot.val();
+                    costs = data ? Object.values(data) : [];
+                    loadCosts();
+                    updateCostsSummary();
+                    updateOverview();
+                });
+            }
+
+            cleanup() {
+                if (plansListener) {
+                    window.firebaseOff(window.firebaseRef(window.firebaseDB, 'plans'), 'value', plansListener);
+                }
+                if (costsListener) {
+                    window.firebaseOff(window.firebaseRef(window.firebaseDB, 'costs'), 'value', costsListener);
+                }
+            }
+
+            fallbackToLocal(key, data) {
+                localStorage.setItem(`vendee-${key}`, JSON.stringify(data));
+                this.updateSyncStatus();
+            }
+
+            setSyncStatus(status) {
+                const indicator = document.getElementById('sync-indicator');
+                if (status === 'syncing') {
+                    indicator.className = 'sync-indicator syncing';
+                    indicator.innerHTML = '⚡ Synchronisation...';
+                }
+            }
+        }
+
+        // Initialize Database Manager
+        let dbManager;
+
+        // Initialize App
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize database manager
+            dbManager = new DatabaseManager();
+            
+            // Check if user is remembered
+            const rememberedUser = localStorage.getItem('vendee-remembered-user');
+            if (rememberedUser) {
+                currentUser = rememberedUser;
+                showMainApp();
+            }
+            
+            // Set today's date as default for cost form
+            document.getElementById('cost-date').value = new Date().toISOString().split('T')[0];
+            
+            // Initialize weather
+            loadWeather();
+            
+            // Set up form handlers
+            setupFormHandlers();
+        });
+
+        function setupFormHandlers() {
+            // Add Plan Form
+            document.getElementById('add-plan-form').addEventListener('submit', function(e) {
+                e.preventDefault();
+                addPlan();
+            });
+            
+            // Add Cost Form
+            document.getElementById('add-cost-form').addEventListener('submit', function(e) {
+                e.preventDefault();
+                addCost();
+            });
+            
+            // Edit Plan Form
+            document.getElementById('edit-plan-form').addEventListener('submit', function(e) {
+                e.preventDefault();
+                updatePlan();
+            });
+        }
+
+        // User Selection and Login
+        function selectUser(username) {
+            document.getElementById('user-selection').classList.add('hidden');
+            document.getElementById('password-section').classList.remove('hidden');
+            document.getElementById('selected-user-name').textContent = users[username].name;
+            document.getElementById('password-input').dataset.user = username;
+            document.getElementById('password-input').focus();
+        }
+
+        function goBack() {
+            document.getElementById('user-selection').classList.remove('hidden');
+            document.getElementById('password-section').classList.add('hidden');
+            document.getElementById('password-input').value = '';
+        }
+
+        function login() {
+            const passwordInput = document.getElementById('password-input');
+            const username = passwordInput.dataset.user;
+            const password = passwordInput.value;
+            const rememberMe = document.getElementById('remember-me').checked;
+            
+            if (users[username] && users[username].password === password) {
+                currentUser = username;
+                
+                if (rememberMe) {
+                    localStorage.setItem('vendee-remembered-user', username);
+                }
+                
+                showMainApp();
+            } else {
+                showNotification('Mot de passe incorrect', 'error');
+                passwordInput.value = '';
+                passwordInput.focus();
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('vendee-remembered-user');
+            currentUser = null;
+            dbManager.cleanup();
+            document.getElementById('main-app').classList.add('hidden');
+            document.getElementById('login-screen').classList.remove('hidden');
+            goBack();
+        }
+
+        function showMainApp() {
+            document.getElementById('login-screen').classList.add('hidden');
+            document.getElementById('main-app').classList.remove('hidden');
+            
+            // Set user info
+            const user = users[currentUser];
+            document.getElementById('current-user').textContent = user.name;
+            document.getElementById('user-initial').textContent = user.name[0];
+            
+            // Setup real-time listeners
+            dbManager.setupRealtimeListeners();
+            
+            // Load initial data
+            setTimeout(() => {
+                loadPlans();
+                loadCosts();
+                updateCostsSummary();
+                loadWeather();
+                updateOverview();
+            }, 500);
+        }
+
+        // Tab Management
+        function switchTab(tabName) {
+            // Update tab buttons
+            document.querySelectorAll('.tab-button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            // Update content
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.add('hidden');
+            });
+            document.getElementById(tabName + '-tab').classList.remove('hidden');
+            
+            // Load specific content if needed
+            if (tabName === 'weather') {
+                loadWeather();
+            } else if (tabName === 'overview') {
+                updateOverview();
+            }
+        }
+
+        // Plans Management
+        function loadPlans() {
+            const plansList = document.getElementById('plans-list');
+            const plansEmpty = document.getElementById('plans-empty');
+            
+            let filteredPlans = plans;
+            if (currentFilter !== 'all') {
+                filteredPlans = plans.filter(plan => plan.day === currentFilter);
+            }
+            
+            if (filteredPlans.length === 0) {
+                plansList.classList.add('hidden');
+                plansEmpty.classList.remove('hidden');
+                return;
+            }
+            
+            plansEmpty.classList.add('hidden');
+            plansList.classList.remove('hidden');
+            
+            // Sort plans by day and time
+            filteredPlans.sort((a, b) => {
+                if (a.day !== b.day) {
+                    return new Date(a.day) - new Date(b.day);
+                }
+                return (a.time || '00:00').localeCompare(b.time || '00:00');
+            });
+            
+            plansList.innerHTML = filteredPlans.map(plan => createPlanCard(plan)).join('');
+        }
+
+        function createPlanCard(plan) {
+            const dayNames = {
+                '2025-08-10': 'Dimanche 10',
+                '2025-08-11': 'Lundi 11',
+                '2025-08-12': 'Mardi 12',
+                '2025-08-13': 'Mercredi 13'
+            };
+            
+            const categoryIcons = {
+                restaurant: '🍽️',
+                visite: '🏛️',
+                transport: '🚗',
+                shopping: '🛍️',
+                detente: '🏖️',
+                autre: '📝'
+            };
+            
+            const user = users[plan.createdBy];
+            const timeStr = plan.time ? ` - ${plan.time}` : '';
+            const locationStr = plan.location ? `<div class="text-sm text-gray-600 mt-1">📍 ${plan.location}</div>` : '';
+            const costStr = plan.cost ? `<div class="text-sm text-vendee-600 font-semibold mt-2">💰 ${parseFloat(plan.cost).toFixed(2)} €</div>` : '';
+            const categoryIcon = plan.category ? categoryIcons[plan.category] || '📝' : '📝';
+            
+            return `
+                <div class="plan-card glass-card rounded-xl p-6 fade-in">
+                    <div class="flex justify-between items-start">
+                        <div class="flex-1">
+                            <div class="flex items-center space-x-2 mb-2">
+                                <span class="text-2xl">${categoryIcon}</span>
+                                <div>
+                                    <div class="font-semibold text-gray-800">${dayNames[plan.day]}${timeStr}</div>
+                                    <div class="text-xs text-gray-500">Ajouté par ${user.name}</div>
+                                </div>
+                            </div>
+                            <p class="text-gray-700 mb-2">${plan.description}</p>
+                            ${locationStr}
+                            ${costStr}
+                        </div>
+                        <div class="flex space-x-2 ml-4">
+                            <button onclick="editPlan('${plan.id}')" class="text-gray-500 hover:text-vendee-600 transition-colors p-1">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                </svg>
+                            </button>
+                            <button onclick="deletePlan('${plan.id}')" class="text-gray-500 hover:text-red-600 transition-colors p-1">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function filterPlans(filter) {
+            currentFilter = filter;
+            
+            // Update filter buttons
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('active', 'bg-vendee-100', 'text-vendee-800');
+                btn.classList.add('bg-gray-100', 'text-gray-700');
+            });
+            event.target.classList.remove('bg-gray-100', 'text-gray-700');
+            event.target.classList.add('active', 'bg-vendee-100', 'text-vendee-800');
+            
+            loadPlans();
+        }
+
+        function openAddPlanModal() {
+            document.getElementById('add-plan-modal').classList.remove('hidden');
+            document.getElementById('plan-day').focus();
+        }
+
+        function closeAddPlanModal() {
+            document.getElementById('add-plan-modal').classList.add('hidden');
+            document.getElementById('add-plan-form').reset();
+        }
+
+        function addPlan() {
+            const plan = {
+                id: Date.now().toString(),
+                day: document.getElementById('plan-day').value,
+                time: document.getElementById('plan-time').value,
+                description: document.getElementById('plan-description').value,
+                location: document.getElementById('plan-location').value,
+                cost: document.getElementById('plan-cost').value,
+                category: document.getElementById('plan-category').value,
+                createdBy: currentUser,
+                createdAt: new Date().toISOString()
+            };
+            
+            plans.push(plan);
+            dbManager.savePlan(plan);
+            
+            closeAddPlanModal();
+            showNotification('Plan ajouté avec succès !');
+        }
+
+        function editPlan(planId) {
+            const plan = plans.find(p => p.id === planId);
+            if (!plan) return;
+            
+            document.getElementById('edit-plan-id').value = plan.id;
+            document.getElementById('edit-plan-day').value = plan.day;
+            document.getElementById('edit-plan-time').value = plan.time || '';
+            document.getElementById('edit-plan-description').value = plan.description;
+            document.getElementById('edit-plan-location').value = plan.location || '';
+            document.getElementById('edit-plan-cost').value = plan.cost || '';
+            document.getElementById('edit-plan-category').value = plan.category || '';
+            
+            document.getElementById('edit-plan-modal').classList.remove('hidden');
+        }
+
+        function closeEditPlanModal() {
+            document.getElementById('edit-plan-modal').classList.add('hidden');
+        }
+
+        function updatePlan() {
+            const planId = document.getElementById('edit-plan-id').value;
+            const planIndex = plans.findIndex(p => p.id === planId);
+            
+            if (planIndex === -1) return;
+            
+            plans[planIndex] = {
+                ...plans[planIndex],
+                day: document.getElementById('edit-plan-day').value,
+                time: document.getElementById('edit-plan-time').value,
+                description: document.getElementById('edit-plan-description').value,
+                location: document.getElementById('edit-plan-location').value,
+                cost: document.getElementById('edit-plan-cost').value,
+                category: document.getElementById('edit-plan-category').value,
+                updatedAt: new Date().toISOString()
+            };
+            
+            dbManager.savePlan(plans[planIndex]);
+            
+            closeEditPlanModal();
+            showNotification('Plan mis à jour avec succès !');
+        }
+
+        function deletePlan(planId) {
+            if (confirm('Êtes-vous sûr de vouloir supprimer ce plan ?')) {
+                plans = plans.filter(p => p.id !== planId);
+                dbManager.deletePlan(planId);
+                showNotification('Plan supprimé');
+            }
+        }
+
+        // Costs Management
+        function loadCosts() {
+            const costsList = document.getElementById('costs-list');
+            const costsEmpty = document.getElementById('costs-empty');
+            
+            if (costs.length === 0) {
+                costsList.classList.add('hidden');
+                costsEmpty.classList.remove('hidden');
+                return;
+            }
+            
+            costsEmpty.classList.add('hidden');
+            costsList.classList.remove('hidden');
+            
+            // Sort costs by date (newest first)
+            const sortedCosts = [...costs].sort((a, b) => new Date(b.date) - new Date(a.date));
+            
+            costsList.innerHTML = sortedCosts.map(cost => createCostItem(cost)).join('');
+        }
+
+        function createCostItem(cost) {
+            const user = users[cost.createdBy];
+            const categoryIcons = {
+                nourriture: '🍽️',
+                transport: '🚗',
+                logement: '🏨',
+                activites: '🎯',
+                shopping: '🛍️',
+                autre: '📝'
+            };
+            
+            const icon = categoryIcons[cost.category] || '📝';
+            const date = new Date(cost.date).toLocaleDateString('fr-FR');
+            
+            return `
+                <div class="cost-item flex items-center justify-between p-4 rounded-lg border border-gray-200">
+                    <div class="flex items-center space-x-3">
+                        <div class="text-2xl">${icon}</div>
+                        <div>
+                            <div class="font-semibold text-gray-800">${cost.description}</div>
+                            <div class="text-sm text-gray-600">${date} • Par ${user.name}</div>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-3">
+                        <div class="font-bold text-vendee-600">${parseFloat(cost.amount).toFixed(2)} €</div>
+                        <button onclick="deleteCost('${cost.id}')" class="text-gray-500 hover:text-red-600 transition-colors p-1">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function updateCostsSummary() {
+            const thiagoTotal = costs
+                .filter(cost => cost.createdBy === 'thiago')
+                .reduce((sum, cost) => sum + parseFloat(cost.amount), 0);
+                
+            const laurineTotal = costs
+                .filter(cost => cost.createdBy === 'laurine')
+                .reduce((sum, cost) => sum + parseFloat(cost.amount), 0);
+                
+            const totalCosts = thiagoTotal + laurineTotal;
+            
+            document.getElementById('thiago-total').textContent = thiagoTotal.toFixed(2) + ' €';
+            document.getElementById('laurine-total').textContent = laurineTotal.toFixed(2) + ' €';
+            document.getElementById('total-costs').textContent = totalCosts.toFixed(2) + ' €';
+        }
+
+        function openAddCostModal() {
+            document.getElementById('add-cost-modal').classList.remove('hidden');
+            document.getElementById('cost-description').focus();
+        }
+
+        function closeAddCostModal() {
+            document.getElementById('add-cost-modal').classList.add('hidden');
+            document.getElementById('add-cost-form').reset();
+            document.getElementById('cost-date').value = new Date().toISOString().split('T')[0];
+        }
+
+        function addCost() {
+            const cost = {
+                id: Date.now().toString(),
+                description: document.getElementById('cost-description').value,
+                amount: document.getElementById('cost-amount').value,
+                category: document.getElementById('cost-category').value,
+                date: document.getElementById('cost-date').value,
+                createdBy: currentUser,
+                createdAt: new Date().toISOString()
+            };
+            
+            costs.push(cost);
+            dbManager.saveCost(cost);
+            
+            closeAddCostModal();
+            showNotification('Dépense ajoutée avec succès !');
+        }
+
+        function deleteCost(costId) {
+            if (confirm('Êtes-vous sûr de vouloir supprimer cette dépense ?')) {
+                costs = costs.filter(c => c.id !== costId);
+                dbManager.deleteCost(costId);
+                showNotification('Dépense supprimée');
+            }
+        }
+
+        // Weather Integration
+        async function loadWeather() {
+            const weatherWidget = document.getElementById('weather-widget');
+            const currentWeather = document.getElementById('current-weather');
+            const forecastWeather = document.getElementById('forecast-weather');
+            const weatherLoader = document.getElementById('weather-loader');
+            
+            const weatherApiKey = "4dea036e0e1947e69d8143342252107";
+            const location = "La Roche-sur-Yon";
+            const url = `https://api.weatherapi.com/v1/forecast.json?key=${weatherApiKey}&q=${location}&days=4&lang=fr`;
+            
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                // Update header weather widget
+                const currentTemp = data.current.temp_c;
+                const currentCondition = data.current.condition.text;
+                const weatherIcon = getWeatherEmoji(data.current.condition.code);
+                
+                document.getElementById('weather-icon').textContent = weatherIcon;
+                document.getElementById('weather-temp').textContent = `${currentTemp}°C`;
+                document.getElementById('weather-desc').textContent = currentCondition;
+                weatherWidget.classList.remove('hidden');
+                
+                // Update weather tab - current weather
+                if (weatherLoader) weatherLoader.style.display = 'none';
+                if (currentWeather) {
+                    currentWeather.innerHTML = `
+                        <div class="text-center">
+                            <div class="text-6xl mb-4">${weatherIcon}</div>
+                            <div class="text-3xl font-bold text-gray-800 mb-2">${currentTemp}°C</div>
+                            <div class="text-lg text-gray-600 mb-4">${currentCondition}</div>
+                            <div class="grid grid-cols-2 gap-4 text-sm">
+                                <div>
+                                    <div class="text-gray-500">Ressenti</div>
+                                    <div class="font-semibold">${data.current.feelslike_c}°C</div>
+                                </div>
+                                <div>
+                                    <div class="text-gray-500">Humidité</div>
+                                    <div class="font-semibold">${data.current.humidity}%</div>
+                                </div>
+                                <div>
+                                    <div class="text-gray-500">Vent</div>
+                                    <div class="font-semibold">${data.current.wind_kph} km/h</div>
+                                </div>
+                                <div>
+                                    <div class="text-gray-500">UV</div>
+                                    <div class="font-semibold">${data.current.uv}</div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                // Update forecast
+                if (forecastWeather) {
+                    const forecastDays = ['Dim 10', 'Lun 11', 'Mar 12', 'Mer 13'];
+                    forecastWeather.innerHTML = data.forecast.forecastday.map((day, index) => {
+                        const dayName = forecastDays[index] || `Jour ${index + 1}`;
+                        const icon = getWeatherEmoji(day.day.condition.code);
+                        return `
+                            <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                <div class="flex items-center space-x-3">
+                                    <div class="text-2xl">${icon}</div>
+                                    <div>
+                                        <div class="font-semibold">${dayName}</div>
+                                        <div class="text-sm text-gray-600">${day.day.condition.text}</div>
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <div class="font-semibold">${Math.round(day.day.maxtemp_c)}°</div>
+                                    <div class="text-sm text-gray-600">${Math.round(day.day.mintemp_c)}°</div>
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+                }
+                
+            } catch (error) {
+                console.error('Weather error:', error);
+                if (weatherLoader) weatherLoader.style.display = 'none';
+                if (currentWeather) {
+                    currentWeather.innerHTML = '<div class="text-center text-red-500">Impossible de charger la météo</div>';
+                }
+            }
+        }
+
+        function getWeatherEmoji(conditionCode) {
+            const code = Number(conditionCode);
+            if (code === 1000) return '☀️'; // Sunny/Clear
+            if ([1003, 1006, 1009].includes(code)) return '☁️'; // Partly cloudy, Cloudy, Overcast
+            if (code >= 1063 && code <= 1201) return '🌧️'; // Various rain types
+            if (code >= 1273 && code <= 1282) return '⛈️'; // Thunder
+            if (code >= 1204 && code <= 1264) return '❄️'; // Sleet, Snow
+            if ([1030, 1135, 1147].includes(code)) return '🌫️'; // Mist, Fog
+            return '🌡️'; // Default
+        }
+
+        // Overview Tab
+        function updateOverview() {
+            updatePlansSummary();
+            updateCostsChart();
+        }
+
+        function updatePlansSummary() {
+            const plansSummary = document.getElementById('plans-summary');
+            const dayNames = {
+                '2025-08-10': 'Dimanche 10 Août',
+                '2025-08-11': 'Lundi 11 Août',
+                '2025-08-12': 'Mardi 12 Août',
+                '2025-08-13': 'Mercredi 13 Août'
+            };
+            
+            const plansByDay = {};
+            plans.forEach(plan => {
+                if (!plansByDay[plan.day]) {
+                    plansByDay[plan.day] = [];
+                }
+                plansByDay[plan.day].push(plan);
+            });
+            
+            const summaryHtml = Object.keys(dayNames).map(day => {
+                const dayPlans = plansByDay[day] || [];
+                const planCount = dayPlans.length;
+                const totalCost = dayPlans.reduce((sum, plan) => sum + (parseFloat(plan.cost) || 0), 0);
+                
+                return `
+                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                        <div>
+                            <div class="font-semibold text-gray-800">${dayNames[day]}</div>
+                            <div class="text-sm text-gray-600">${planCount} plan${planCount !== 1 ? 's' : ''}</div>
+                        </div>
+                        <div class="text-right">
+                            <div class="font-semibold text-vendee-600">${totalCost.toFixed(2)} €</div>
+                            <div class="text-xs text-gray-500">estimé</div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            plansSummary.innerHTML = summaryHtml || '<div class="text-center text-gray-500 py-4">Aucun plan pour le moment</div>';
+        }
+
+        function updateCostsChart() {
+            const ctx = document.getElementById('costs-chart').getContext('2d');
+            
+            if (costsChart) {
+                costsChart.destroy();
+            }
+            
+            const thiagoTotal = costs
+                .filter(cost => cost.createdBy === 'thiago')
+                .reduce((sum, cost) => sum + parseFloat(cost.amount), 0);
+                
+            const laurineTotal = costs
+                .filter(cost => cost.createdBy === 'laurine')
+                .reduce((sum, cost) => sum + parseFloat(cost.amount), 0);
+            
+            if (thiagoTotal === 0 && laurineTotal === 0) {
+                ctx.canvas.parentElement.innerHTML = '<div class="flex items-center justify-center h-64 text-gray-500">Aucune dépense enregistrée</div>';
+                return;
+            }
+            
+            costsChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Thiago', 'Laurine'],
+                    datasets: [{
+                        data: [thiagoTotal, laurineTotal],
+                        backgroundColor: ['#d97706', '#f59e0b'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                padding: 20,
+                                usePointStyle: true
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `${context.label}: ${context.parsed.toFixed(2)} €`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Notifications
+        function showNotification(message, type = 'success') {
+            const notification = document.getElementById('notification');
+            const notificationText = document.getElementById('notification-text');
+            
+            notificationText.textContent = message;
+            
+            if (type === 'error') {
+                notification.className = 'notification bg-white shadow-lg rounded-lg p-4 border-l-4 border-red-500';
+                notification.querySelector('span').textContent = '❌';
+            } else {
+                notification.className = 'notification bg-white shadow-lg rounded-lg p-4 border-l-4 border-green-500';
+                notification.querySelector('span').textContent = '✅';
+            }
+            
+            notification.classList.add('show');
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                // Close any open modals
+                document.getElementById('add-plan-modal').classList.add('hidden');
+                document.getElementById('add-cost-modal').classList.add('hidden');
+                document.getElementById('edit-plan-modal').classList.add('hidden');
+            }
+        });
+    </script>
+</body>
+</html>
