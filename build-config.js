@@ -32,6 +32,7 @@ const missingVars = Object.entries(firebaseConfig)
 
 if (missingVars.length > 0) {
   console.warn('⚠️  Variáveis de ambiente não definidas:', missingVars);
+  process.exit(1); // Falhar o build se variáveis não estiverem definidas
 } else {
   console.log('✅ Todas as variáveis de ambiente configuradas!');
 }
