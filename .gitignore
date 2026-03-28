@@ -28,3 +28,5 @@ test-firebase.html
 
 # Node modules
 node_modules/
+
+.claude/
