@@ -1445,7 +1445,7 @@
       div.dataset.category = photo.cat;
       div.style.setProperty('--i', i);
       div.innerHTML = `
-        <img src="${cldUrl(photo.id, 400)}" data-full="${cldUrlMax(photo.id)}" alt="${getCategoryLabel(photo.cat)}" loading="lazy">
+        <img src="${cldUrl(photo.id, 700)}" data-full="${cldUrlMax(photo.id)}" alt="${getCategoryLabel(photo.cat)}" loading="lazy">
         <div class="item-overlay"><span class="item-cat">${getCategoryLabel(photo.cat)}</span></div>
       `;
       return div;
