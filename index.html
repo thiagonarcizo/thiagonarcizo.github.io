@@ -940,6 +940,11 @@
       transition: opacity 0.3s;
     }
 
+    @media (hover: hover) and (pointer: fine) {
+      .lightbox img.desktop-zoom-ready { cursor: zoom-in; }
+      .lightbox img.desktop-zoomed { cursor: zoom-out; }
+    }
+
     .lightbox img.loading {
       opacity: 0;
     }
@@ -2219,7 +2224,11 @@
     let lastLightboxTapX = 0;
     let lastLightboxTapY = 0;
     let lastLightboxNavAt = 0;
+    let desktopZoomActive = false;
+    let desktopZoomOriginX = 50;
+    let desktopZoomOriginY = 50;
     let lastLightboxFocus = null;
+    const desktopZoomMedia = window.matchMedia('(hover: hover) and (pointer: fine)');
 
     function getVisibleItems() {
       return Array.from(document.querySelectorAll('.masonry-item')).filter(item => !item.classList.contains('hidden'));
@@ -2262,15 +2271,21 @@
       lightboxImg.classList.remove('loading');
       lightboxSpinner.classList.remove('visible');
       preloadAdjacent();
+      syncDesktopZoomUi();
     });
 
     lightboxImg.addEventListener('error', () => {
       lightboxImg.classList.remove('loading');
       lightboxSpinner.classList.remove('visible');
+      syncDesktopZoomUi();
     });
 
     function getFocusableLightboxControls() {
       return Array.from(lightbox.querySelectorAll('button')).filter(el => !el.disabled && el.getClientRects().length > 0);
+    }
+
+    function canUseDesktopZoom() {
+      return desktopZoomMedia.matches;
     }
 
     function clampValue(value, min, max) {
@@ -2294,9 +2309,19 @@
       lightboxPanY = clampValue(lightboxPanY, -limitY, limitY);
     }
 
+    function syncDesktopZoomUi() {
+      const showZoomCursor = canUseDesktopZoom() && lightbox.classList.contains('open') && !lightboxImg.classList.contains('loading');
+      lightboxImg.classList.toggle('desktop-zoom-ready', showZoomCursor && !desktopZoomActive);
+      lightboxImg.classList.toggle('desktop-zoomed', showZoomCursor && desktopZoomActive);
+      lightboxImg.style.transformOrigin = desktopZoomActive
+        ? `${desktopZoomOriginX}% ${desktopZoomOriginY}%`
+        : 'center center';
+    }
+
     function renderLightboxTransform({ animate = false } = {}) {
       if (animate) lightboxImg.classList.remove('gesture-active');
       lightboxImg.style.transform = `translate3d(${lightboxPanX}px, ${lightboxPanY}px, 0) scale(${lightboxScale})`;
+      syncDesktopZoomUi();
     }
 
     // keep zoom state stable across img swaps
@@ -2306,6 +2331,9 @@
       lightboxPanY = 0;
       lightboxGestureMode = '';
       lightboxGestureMoved = false;
+      desktopZoomActive = false;
+      desktopZoomOriginX = 50;
+      desktopZoomOriginY = 50;
       lightboxImg.classList.remove('gesture-active');
       renderLightboxTransform({ animate });
     }
@@ -2331,12 +2359,35 @@
       lightboxGestureMoved = true;
     }
 
+    function updateDesktopZoomOrigin(e) {
+      const rect = lightboxImg.getBoundingClientRect();
+      if (!rect.width || !rect.height) return;
+      desktopZoomOriginX = clampValue(((e.clientX - rect.left) / rect.width) * 100, 0, 100);
+      desktopZoomOriginY = clampValue(((e.clientY - rect.top) / rect.height) * 100, 0, 100);
+      syncDesktopZoomUi();
+    }
+
+    function toggleDesktopZoom(e) {
+      if (!canUseDesktopZoom() || lightboxImg.classList.contains('loading')) return;
+      if (desktopZoomActive) {
+        resetLightboxZoom({ animate: true });
+        return;
+      }
+      updateDesktopZoomOrigin(e);
+      desktopZoomActive = true;
+      lightboxScale = 2;
+      lightboxPanX = 0;
+      lightboxPanY = 0;
+      renderLightboxTransform({ animate: true });
+    }
+
     function setLightboxState(isOpen, { restoreFocus = true } = {}) {
       lightbox.classList.toggle('open', isOpen);
       lightbox.hidden = !isOpen;
       lightbox.toggleAttribute('inert', !isOpen);
       lightbox.setAttribute('aria-hidden', String(!isOpen));
       syncBodyLock();
+      syncDesktopZoomUi();
 
       if (!isOpen && restoreFocus && lastLightboxFocus instanceof HTMLElement) {
         requestAnimationFrame(() => lastLightboxFocus.focus());
@@ -2547,6 +2598,16 @@
       clampLightboxPan();
       renderLightboxTransform({ animate: true });
     }, { passive: true });
+
+    lightboxImg.addEventListener('mousemove', (e) => {
+      if (!desktopZoomActive || !canUseDesktopZoom()) return;
+      updateDesktopZoomOrigin(e);
+    });
+
+    lightboxImg.addEventListener('click', (e) => {
+      if (!canUseDesktopZoom()) return;
+      toggleDesktopZoom(e);
+    });
 
     // Focus trap
     lightbox.addEventListener('keydown', (e) => {
