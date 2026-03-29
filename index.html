@@ -436,12 +436,12 @@
       font-weight: 300;
       letter-spacing: 0.15em;
       color: var(--hero-text, #E8E4E0);
-      padding: 0.8rem 1.15rem;
+      padding: 0.22em 0.45em;
       border: 1px solid var(--hero-chip-border);
-      border-radius: 999px;
+      border-radius: 0.7em;
       background: var(--hero-chip-bg);
-      backdrop-filter: blur(20px) saturate(140%);
-      -webkit-backdrop-filter: blur(20px) saturate(140%);
+      backdrop-filter: blur(14px) saturate(135%);
+      -webkit-backdrop-filter: blur(14px) saturate(135%);
       box-shadow: var(--hero-chip-shadow);
       text-shadow: 0 1px 12px rgba(0, 0, 0, 0.18);
       opacity: 0;
@@ -457,7 +457,7 @@
 
     @media (max-width: 768px) {
       .hero-subtitle {
-        padding: 0.72rem 1rem;
+        padding: 0.2em 0.38em;
         font-size: 0.88rem;
         letter-spacing: 0.12em;
       }
@@ -1826,16 +1826,16 @@
           root.style.setProperty('--hero-text', '#1A1918');
           root.style.setProperty('--hero-text-sub', 'rgba(26, 25, 24, 0.6)');
           root.style.setProperty('--hero-text-outline', '#F5F3F0');
-          root.style.setProperty('--hero-chip-bg', 'rgba(245, 243, 240, 0.44)');
-          root.style.setProperty('--hero-chip-border', 'rgba(26, 25, 24, 0.14)');
-          root.style.setProperty('--hero-chip-shadow', '0 20px 42px rgba(18, 17, 16, 0.14)');
+          root.style.setProperty('--hero-chip-bg', 'rgba(245, 243, 240, 0.28)');
+          root.style.setProperty('--hero-chip-border', 'rgba(26, 25, 24, 0.12)');
+          root.style.setProperty('--hero-chip-shadow', '0 8px 20px rgba(18, 17, 16, 0.1)');
         } else {
           root.style.setProperty('--hero-text', '#E8E4E0');
           root.style.setProperty('--hero-text-sub', 'rgba(232, 228, 224, 0.65)');
           root.style.setProperty('--hero-text-outline', '#1A1918');
-          root.style.setProperty('--hero-chip-bg', 'rgba(18, 17, 16, 0.28)');
-          root.style.setProperty('--hero-chip-border', 'rgba(232, 228, 224, 0.14)');
-          root.style.setProperty('--hero-chip-shadow', '0 20px 42px rgba(0, 0, 0, 0.2)');
+          root.style.setProperty('--hero-chip-bg', 'rgba(18, 17, 16, 0.2)');
+          root.style.setProperty('--hero-chip-border', 'rgba(232, 228, 224, 0.12)');
+          root.style.setProperty('--hero-chip-shadow', '0 8px 20px rgba(0, 0, 0, 0.14)');
         }
         // keep a soft base veil so the subtitle stays legible on busy frames
         root.style.setProperty('--hero-overlay-top', 'rgba(18, 17, 16, 0.1)');
