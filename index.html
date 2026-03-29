@@ -985,10 +985,6 @@
             <input type="text" id="name" name="name" required autocomplete="name">
           </div>
           <div class="form-group">
-            <label for="email" data-i18n="contact.email">email</label>
-            <input type="email" id="email" name="email" required autocomplete="email">
-          </div>
-          <div class="form-group">
             <label for="message" data-i18n="contact.message">mensagem</label>
             <textarea id="message" name="message" rows="4" required></textarea>
           </div>
@@ -1121,7 +1117,6 @@
         contact: {
           title: 'vamos conversar',
           name: 'nome',
-          email: 'email',
           message: 'mensagem',
           send: 'enviar',
           or: 'ou me encontre por aqui'
@@ -1146,7 +1141,6 @@
         contact: {
           title: 'let\'s talk',
           name: 'name',
-          email: 'email',
           message: 'message',
           send: 'send',
           or: 'or find me here'
@@ -1171,7 +1165,6 @@
         contact: {
           title: 'parlons',
           name: 'nom',
-          email: 'email',
           message: 'message',
           send: 'envoyer',
           or: 'ou retrouvez-moi ici'
@@ -1714,10 +1707,9 @@
     document.getElementById('contactForm').addEventListener('submit', (e) => {
       e.preventDefault();
       const name    = document.getElementById('name').value.trim();
-      const email   = document.getElementById('email').value.trim();
       const message = document.getElementById('message').value.trim();
       const subject = encodeURIComponent(`contato de ${name}`);
-      const body    = encodeURIComponent(`de: ${name}\nreply-to: ${email}\n\n${message}`);
+      const body    = encodeURIComponent(`de: ${name}\n\n${message}`);
       window.location.href = `mailto:thiago@narcizo.xyz?subject=${subject}&body=${body}`;
     });
 
