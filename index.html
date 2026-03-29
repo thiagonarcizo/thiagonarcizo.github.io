@@ -256,6 +256,7 @@
       border-radius: 50%;
       transition: background 0.3s;
       position: relative;
+      overflow: hidden;
     }
 
     .theme-toggle:hover { background: var(--border); }
@@ -263,13 +264,19 @@
     .theme-toggle svg {
       width: 18px; height: 18px;
       color: var(--text-secondary);
-      transition: color 0.3s, transform 0.6s var(--ease), opacity 0.3s;
+      transition: color 0.3s;
     }
 
     .theme-toggle:hover svg { color: var(--text); }
 
     .sun-icon, .moon-icon {
       position: absolute;
+      inset: 0;
+      margin: auto;
+      transform-origin: center;
+      backface-visibility: hidden;
+      will-change: transform, opacity;
+      transition: transform 0.6s var(--ease), opacity 0.28s var(--ease);
     }
 
     .sun-icon {
