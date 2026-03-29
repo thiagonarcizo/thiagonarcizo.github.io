@@ -45,6 +45,9 @@
       --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
       --max-w: 1200px;
       --hero-text-outline: #1A1918;
+      --hero-chip-bg: rgba(18, 17, 16, 0.18);
+      --hero-chip-border: rgba(232, 228, 224, 0.18);
+      --hero-chip-shadow: 0 18px 40px rgba(0, 0, 0, 0.16);
       --nav-scroll-offset: 80px;
     }
 
@@ -424,11 +427,23 @@
     }
 
     .hero-subtitle {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.55em;
       font-family: var(--sans);
       font-size: clamp(0.9rem, 2vw, 1.2rem);
       font-weight: 300;
       letter-spacing: 0.15em;
       color: var(--hero-text, #E8E4E0);
+      padding: 0.8rem 1.15rem;
+      border: 1px solid var(--hero-chip-border);
+      border-radius: 999px;
+      background: var(--hero-chip-bg);
+      backdrop-filter: blur(20px) saturate(140%);
+      -webkit-backdrop-filter: blur(20px) saturate(140%);
+      box-shadow: var(--hero-chip-shadow);
+      text-shadow: 0 1px 12px rgba(0, 0, 0, 0.18);
       opacity: 0;
       transform: translateY(20px);
       animation: fadeUp 1s var(--ease-out) 0.8s forwards;
@@ -436,7 +451,16 @@
 
     .hero-subtitle .dot-sep {
       display: inline-block;
+      margin-top: -0.05em;
       animation: dotPulse 3s ease-in-out infinite;
+    }
+
+    @media (max-width: 768px) {
+      .hero-subtitle {
+        padding: 0.72rem 1rem;
+        font-size: 0.88rem;
+        letter-spacing: 0.12em;
+      }
     }
 
     .hero-scroll {
@@ -1802,11 +1826,18 @@
           root.style.setProperty('--hero-text', '#1A1918');
           root.style.setProperty('--hero-text-sub', 'rgba(26, 25, 24, 0.6)');
           root.style.setProperty('--hero-text-outline', '#F5F3F0');
+          root.style.setProperty('--hero-chip-bg', 'rgba(245, 243, 240, 0.44)');
+          root.style.setProperty('--hero-chip-border', 'rgba(26, 25, 24, 0.14)');
+          root.style.setProperty('--hero-chip-shadow', '0 20px 42px rgba(18, 17, 16, 0.14)');
         } else {
           root.style.setProperty('--hero-text', '#E8E4E0');
           root.style.setProperty('--hero-text-sub', 'rgba(232, 228, 224, 0.65)');
           root.style.setProperty('--hero-text-outline', '#1A1918');
+          root.style.setProperty('--hero-chip-bg', 'rgba(18, 17, 16, 0.28)');
+          root.style.setProperty('--hero-chip-border', 'rgba(232, 228, 224, 0.14)');
+          root.style.setProperty('--hero-chip-shadow', '0 20px 42px rgba(0, 0, 0, 0.2)');
         }
+        // keep a soft base veil so the subtitle stays legible on busy frames
         root.style.setProperty('--hero-overlay-top', 'rgba(18, 17, 16, 0.1)');
         root.style.setProperty('--hero-overlay-mid', 'rgba(18, 17, 16, 0.2)');
         root.style.setProperty('--hero-overlay-bot', 'rgba(18, 17, 16, 0.35)');
