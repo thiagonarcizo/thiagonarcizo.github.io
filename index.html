@@ -2367,6 +2367,18 @@
       syncDesktopZoomUi();
     }
 
+    function setDesktopZoomScale(nextScale, { animate = false } = {}) {
+      lightboxScale = clampValue(nextScale, 1, 3);
+      desktopZoomActive = lightboxScale > 1.01;
+      if (!desktopZoomActive) {
+        lightboxPanX = 0;
+        lightboxPanY = 0;
+        desktopZoomOriginX = 50;
+        desktopZoomOriginY = 50;
+      }
+      renderLightboxTransform({ animate });
+    }
+
     function toggleDesktopZoom(e) {
       if (!canUseDesktopZoom() || lightboxImg.classList.contains('loading')) return;
       if (desktopZoomActive) {
@@ -2374,11 +2386,7 @@
         return;
       }
       updateDesktopZoomOrigin(e);
-      desktopZoomActive = true;
-      lightboxScale = 2;
-      lightboxPanX = 0;
-      lightboxPanY = 0;
-      renderLightboxTransform({ animate: true });
+      setDesktopZoomScale(2, { animate: true });
     }
 
     function setLightboxState(isOpen, { restoreFocus = true } = {}) {
@@ -2602,6 +2610,47 @@
     lightboxImg.addEventListener('mousemove', (e) => {
       if (!desktopZoomActive || !canUseDesktopZoom()) return;
       updateDesktopZoomOrigin(e);
+    });
+
+    lightboxImg.addEventListener('wheel', (e) => {
+      if (!canUseDesktopZoom() || !lightbox.classList.contains('open') || lightboxImg.classList.contains('loading')) return;
+
+      if (e.ctrlKey || e.metaKey) {
+        updateDesktopZoomOrigin(e);
+        setDesktopZoomScale(lightboxScale * Math.exp(-e.deltaY * 0.0035));
+        e.preventDefault();
+        return;
+      }
+
+      if (!desktopZoomActive) return;
+      const rect = lightboxImg.getBoundingClientRect();
+      if (!rect.width || !rect.height) return;
+      desktopZoomOriginX = clampValue(desktopZoomOriginX + (e.deltaX / rect.width) * 100, 0, 100);
+      desktopZoomOriginY = clampValue(desktopZoomOriginY + (e.deltaY / rect.height) * 100, 0, 100);
+      syncDesktopZoomUi();
+      e.preventDefault();
+    }, { passive: false });
+
+    let desktopGestureStartScale = 1;
+
+    lightboxImg.addEventListener('gesturestart', (e) => {
+      if (!canUseDesktopZoom() || !lightbox.classList.contains('open')) return;
+      desktopGestureStartScale = lightboxScale;
+      if (typeof e.clientX === 'number' && typeof e.clientY === 'number') updateDesktopZoomOrigin(e);
+      e.preventDefault();
+    });
+
+    lightboxImg.addEventListener('gesturechange', (e) => {
+      if (!canUseDesktopZoom() || !lightbox.classList.contains('open')) return;
+      if (typeof e.clientX === 'number' && typeof e.clientY === 'number') updateDesktopZoomOrigin(e);
+      setDesktopZoomScale(desktopGestureStartScale * e.scale);
+      e.preventDefault();
+    });
+
+    lightboxImg.addEventListener('gestureend', (e) => {
+      if (!canUseDesktopZoom() || !lightbox.classList.contains('open')) return;
+      if (lightboxScale <= 1.02) resetLightboxZoom({ animate: true });
+      e.preventDefault();
     });
 
     lightboxImg.addEventListener('click', (e) => {
