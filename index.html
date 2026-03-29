@@ -1319,20 +1319,24 @@
       history.scrollRestoration = 'manual';
     }
 
-    function resetToHeroOnReload() {
-      if (!reloadNavigation) return false;
-      // drop the hash on reload so the browser doesn't restore an old anchor jump
+    if (reloadNavigation) {
+      // clear the hash early on reload so the browser starts from the hero again
       if (window.location.hash) history.replaceState(null, '', window.location.pathname + window.location.search);
       window.scrollTo({ top: 0, behavior: 'auto' });
-      requestAnimationFrame(() => window.scrollTo({ top: 0, behavior: 'auto' }));
-      setTimeout(() => window.scrollTo({ top: 0, behavior: 'auto' }), 80);
-      return true;
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
     }
 
     window.addEventListener('load', () => {
       requestAnimationFrame(() => {
         updateNavScrollOffset();
-        if (!resetToHeroOnReload()) syncHashScroll('auto');
+        if (reloadNavigation) {
+          window.scrollTo({ top: 0, behavior: 'auto' });
+          document.documentElement.scrollTop = 0;
+          document.body.scrollTop = 0;
+          return;
+        }
+        syncHashScroll('auto');
       });
     });
 
@@ -1348,7 +1352,6 @@
       });
     });
 
-    window.addEventListener('pageshow', () => { resetToHeroOnReload(); });
     window.addEventListener('hashchange', () => syncHashScroll('auto'));
 
     /* ══════════════════════════════════════
