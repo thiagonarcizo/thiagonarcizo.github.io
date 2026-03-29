@@ -53,8 +53,8 @@
 
     [data-theme="dark"] {
       --bg: #121110;
-      --text: #E8E4E0;
-      --text-secondary: #8A8580;
+      --text: #F1ECE7;
+      --text-secondary: #B7B0A9;
       --accent: #B89B78;
       --nav-bg: rgba(18, 17, 16, 0.92);
       --card-bg: #1E1D1B;
@@ -2193,6 +2193,9 @@
     let lightboxGestureMode = '';
     let lightboxGestureMoved = false;
     let lastLightboxTap = 0;
+    let lastLightboxTapX = 0;
+    let lastLightboxTapY = 0;
+    let lastLightboxNavAt = 0;
     let lastLightboxFocus = null;
 
     function getVisibleItems() {
@@ -2226,6 +2229,7 @@
     }
 
     function loadLightboxSrc(src) {
+      clearLightboxTapIntent();
       lightboxImg.classList.add('loading');
       lightboxSpinner.classList.add('visible');
       lightboxImg.src = src;
@@ -2297,6 +2301,8 @@
 
     function clearLightboxTapIntent() {
       lastLightboxTap = 0;
+      lastLightboxTapX = 0;
+      lastLightboxTapY = 0;
       touchDeltaX = 0;
       touchDeltaY = 0;
       lightboxGestureMoved = true;
@@ -2333,6 +2339,7 @@
     }
 
     function navLightbox(dir) {
+      lastLightboxNavAt = Date.now();
       resetLightboxZoom();
       lightboxIndex = (lightboxIndex + dir + lightboxItems.length) % lightboxItems.length;
       const targetImg = lightboxItems[lightboxIndex].querySelector('img');
@@ -2477,14 +2484,20 @@
 
       const now = Date.now();
       const isTap = !lightboxGestureMoved && Math.abs(touchDeltaX) < 8 && Math.abs(touchDeltaY) < 8;
-      if (isTap && now - lastLightboxTap < 280) {
+      const tapNearLast = Math.hypot(touchStartX - lastLightboxTapX, touchStartY - lastLightboxTapY) < 28;
+      const navRecently = now - lastLightboxNavAt < 320;
+      if (isTap && !navRecently && now - lastLightboxTap < 260 && tapNearLast) {
         toggleLightboxZoom();
         lastLightboxTap = 0;
+        lastLightboxTapX = 0;
+        lastLightboxTapY = 0;
         return;
       }
 
       if (isTap) {
         lastLightboxTap = now;
+        lastLightboxTapX = touchStartX;
+        lastLightboxTapY = touchStartY;
         return;
       }
 
