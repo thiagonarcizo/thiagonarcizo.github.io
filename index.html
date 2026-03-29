@@ -71,17 +71,19 @@
     html {
       scroll-behavior: smooth;
       -webkit-text-size-adjust: 100%;
+      background-color: var(--bg);
+      transition: background-color 0.55s var(--ease);
     }
 
     body {
       font-family: var(--sans);
       font-weight: 400;
-      background: var(--bg);
+      background-color: var(--bg);
       color: var(--text);
       line-height: 1.6;
       overflow-x: hidden;
       text-transform: lowercase;
-      transition: background 0.5s var(--ease), color 0.5s var(--ease);
+      transition: background-color 0.55s var(--ease), color 0.5s var(--ease);
     }
 
     img { display: block; max-width: 100%; height: auto; }
@@ -286,7 +288,7 @@
 
     .moon-icon {
       opacity: 0;
-      transform: translateY(5px) scale(0.72);
+      transform: translateY(5px) scale(0.72) scaleX(-1);
     }
 
     [data-theme="dark"] .sun-icon {
@@ -296,7 +298,7 @@
 
     [data-theme="dark"] .moon-icon {
       opacity: 1;
-      transform: translateY(0) scale(1);
+      transform: translateY(0) scale(1) scaleX(-1);
     }
 
     [data-theme="dark"] .theme-toggle {
@@ -338,14 +340,14 @@
       position: fixed;
       inset: 0;
       z-index: 99;
-      background: var(--bg);
+      background-color: var(--bg);
       flex-direction: column;
       align-items: center;
       justify-content: center;
       gap: 40px;
       opacity: 0;
       pointer-events: none;
-      transition: opacity 0.4s var(--ease);
+      transition: opacity 0.4s var(--ease), background-color 0.55s var(--ease);
     }
 
     .mobile-menu.open {
@@ -573,6 +575,8 @@
     #about,
     #contact {
       scroll-margin-top: var(--nav-scroll-offset);
+      background-color: var(--bg);
+      transition: background-color 0.7s var(--ease), color 0.55s var(--ease);
     }
 
     #portfolio {
@@ -580,7 +584,6 @@
       z-index: 3;
       margin-top: -2px;
       padding-top: calc(clamp(60px, 10vw, 120px) + 2px);
-      background: var(--bg);
     }
 
     .section-inner {
@@ -594,6 +597,7 @@
       margin-bottom: clamp(32px, 5vw, 56px);
       letter-spacing: -0.02em;
       color: var(--text);
+      transition: color 0.55s var(--ease);
     }
 
     /* Scroll reveal */
@@ -626,7 +630,7 @@
       border-radius: 100px;
       border: 1px solid var(--border);
       color: var(--text-secondary);
-      transition: all 0.35s var(--ease);
+      transition: color 0.35s var(--ease), border-color 0.35s var(--ease), background-color 0.35s var(--ease);
       font-weight: 400;
     }
 
@@ -723,7 +727,7 @@
       padding: 14px 36px;
       border: 1px solid var(--accent);
       border-radius: 100px;
-      transition: all 0.35s var(--ease);
+      transition: color 0.35s var(--ease), border-color 0.35s var(--ease), background-color 0.35s var(--ease);
     }
 
     .more-btn:hover {
@@ -767,6 +771,7 @@
       line-height: 1.75;
       color: var(--text-secondary);
       max-width: 520px;
+      transition: color 0.55s var(--ease);
     }
 
     /* ══════════════════════════════════════
@@ -801,6 +806,7 @@
       color: var(--text-secondary);
       margin-bottom: 8px;
       font-weight: 400;
+      transition: color 0.55s var(--ease);
     }
 
     .form-group input,
@@ -813,7 +819,7 @@
       font-size: 0.95rem;
       color: var(--text);
       outline: none;
-      transition: border-color 0.3s;
+      transition: color 0.55s var(--ease), border-color 0.4s var(--ease), background-color 0.55s var(--ease);
     }
 
     .form-group input:focus,
@@ -834,7 +840,7 @@
       border: 1px solid var(--accent);
       border-radius: 100px;
       color: var(--accent);
-      transition: all 0.35s var(--ease);
+      transition: color 0.35s var(--ease), border-color 0.35s var(--ease), background-color 0.35s var(--ease);
     }
 
     .submit-btn:hover {
@@ -847,6 +853,7 @@
       color: var(--text-secondary);
       letter-spacing: 0.04em;
       margin-bottom: 20px;
+      transition: color 0.55s var(--ease);
     }
 
     .contact-links {
@@ -863,7 +870,7 @@
       border-radius: 50%;
       border: 1px solid var(--border);
       color: var(--text-secondary);
-      transition: all 0.3s var(--ease);
+      transition: color 0.3s var(--ease), border-color 0.3s var(--ease), background-color 0.55s var(--ease), transform 0.3s var(--ease);
     }
 
     .contact-links a:hover {
@@ -886,6 +893,8 @@
       color: var(--text-secondary);
       letter-spacing: 0.04em;
       border-top: 1px solid var(--border);
+      background-color: var(--bg);
+      transition: background-color 0.7s var(--ease), color 0.55s var(--ease), border-color 0.55s var(--ease);
     }
 
     /* ══════════════════════════════════════
