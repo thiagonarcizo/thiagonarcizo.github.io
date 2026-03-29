@@ -1297,11 +1297,11 @@
       const gap = id === 'portfolio' ? 0 : 16;
       const y = target.getBoundingClientRect().top + window.scrollY - navEl.offsetHeight - gap;
       const smooth = !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-      const behavior = behaviorOverride ?? (smooth ? 'smooth' : 'instant');
+      const behavior = behaviorOverride ?? (smooth ? 'smooth' : 'auto');
       window.scrollTo({ top: Math.max(0, y), behavior });
     }
 
-    function syncHashScroll(behavior = 'instant') {
+    function syncHashScroll(behavior = 'auto') {
       const id = decodeURIComponent(window.location.hash.replace(/^#/, ''));
       if (!id) return;
       // wait a frame so the native hash jump can finish before we correct it
@@ -1313,18 +1313,26 @@
       return navEntry?.type === 'reload';
     }
 
+    const reloadNavigation = isReloadNavigation();
+
+    if (reloadNavigation && 'scrollRestoration' in history) {
+      history.scrollRestoration = 'manual';
+    }
+
     function resetToHeroOnReload() {
-      if (!isReloadNavigation()) return false;
+      if (!reloadNavigation) return false;
       // drop the hash on reload so the browser doesn't restore an old anchor jump
       if (window.location.hash) history.replaceState(null, '', window.location.pathname + window.location.search);
-      requestAnimationFrame(() => window.scrollTo({ top: 0, behavior: 'instant' }));
+      window.scrollTo({ top: 0, behavior: 'auto' });
+      requestAnimationFrame(() => window.scrollTo({ top: 0, behavior: 'auto' }));
+      setTimeout(() => window.scrollTo({ top: 0, behavior: 'auto' }), 80);
       return true;
     }
 
     window.addEventListener('load', () => {
       requestAnimationFrame(() => {
         updateNavScrollOffset();
-        if (!resetToHeroOnReload()) syncHashScroll('instant');
+        if (!resetToHeroOnReload()) syncHashScroll('auto');
       });
     });
 
@@ -1340,7 +1348,8 @@
       });
     });
 
-    window.addEventListener('hashchange', () => syncHashScroll('instant'));
+    window.addEventListener('pageshow', () => { resetToHeroOnReload(); });
+    window.addEventListener('hashchange', () => syncHashScroll('auto'));
 
     /* ══════════════════════════════════════
        NAV SCROLL BEHAVIOR + TITLE MORPH
