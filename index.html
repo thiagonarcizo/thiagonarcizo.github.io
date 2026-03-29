@@ -2386,7 +2386,12 @@
 
     lightbox.addEventListener('touchstart', (e) => {
       if (e.target !== lightboxImg) clearLightboxTapIntent();
-    }, { passive: true });
+      if (e.target !== lightboxImg && e.touches.length > 1) e.preventDefault();
+    }, { passive: false });
+
+    lightbox.addEventListener('touchmove', (e) => {
+      if (e.target !== lightboxImg && e.touches.length > 1) e.preventDefault();
+    }, { passive: false });
 
     document.addEventListener('keydown', (e) => {
       if (!lightbox.classList.contains('open')) return;
