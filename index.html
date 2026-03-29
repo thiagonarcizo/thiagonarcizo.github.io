@@ -385,12 +385,6 @@
       transition: color 1.2s var(--ease);
     }
 
-    .hero-title,
-    .hero-subtitle {
-      -webkit-text-stroke: 1px var(--hero-text-outline);
-      paint-order: stroke fill;
-    }
-
     .hero-title {
       font-family: var(--serif);
       font-size: clamp(3rem, 8vw, 7rem);
@@ -398,6 +392,8 @@
       letter-spacing: -0.02em;
       margin-bottom: clamp(12px, 2vw, 20px);
       min-height: 1.1em;
+      -webkit-text-stroke: 1px var(--hero-text-outline);
+      paint-order: stroke fill;
     }
 
     .hero-title-float {
