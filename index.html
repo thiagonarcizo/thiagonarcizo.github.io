@@ -1269,25 +1269,83 @@
     const heroTitleEl = document.getElementById('heroTitle');
     let lastScroll = 0;
     let titleMorphReady = false;
-    let startRect, endRect, startFontSize, endFontSize;
+    let startCenterX, startCenterY, startFontSize, endFontSize;
+
+    const reducedMotionGlobal = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
     function measureTitleMorph() {
       if (!heroTitleEl || !heroTitleEl.textContent) return;
-      startRect = heroTitleEl.getBoundingClientRect();
-      const heroRect = heroSection.getBoundingClientRect();
-      startRect = {
-        left: startRect.left,
-        top: startRect.top + window.scrollY - heroRect.top,
-        width: startRect.width,
-        height: startRect.height
-      };
-      endRect = navLogo.getBoundingClientRect();
+      const saved = window.scrollY;
+      window.scrollTo(0, 0);
+      const titleR = heroTitleEl.getBoundingClientRect();
+      startCenterX = titleR.left + titleR.width / 2;
+      startCenterY = titleR.top + titleR.height / 2;
       startFontSize = parseFloat(getComputedStyle(heroTitleEl).fontSize);
       endFontSize = parseFloat(getComputedStyle(navLogo).fontSize);
+      window.scrollTo(0, saved);
       titleMorphReady = true;
     }
 
-    const reducedMotionGlobal = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    let currentT = 0;
+    let targetT = 0;
+    let morphRafId = null;
+    const LERP_SPEED = 0.12;
+    const heroTextColor = () => getComputedStyle(document.documentElement).getPropertyValue('--hero-text').trim() || '#E8E4E0';
+
+    function applyMorph(t) {
+      if (t <= 0.001) {
+        heroTitleFloat.style.opacity = '0';
+        heroTitleEl.style.opacity = '';
+        navLogo.classList.add('hidden');
+        return;
+      }
+
+      if (t >= 0.999) {
+        heroTitleFloat.style.opacity = '0';
+        heroTitleEl.style.opacity = '0';
+        navLogo.classList.remove('hidden');
+        return;
+      }
+
+      navLogo.classList.add('hidden');
+      heroTitleEl.style.opacity = '0';
+
+      const eased = 1 - Math.pow(1 - t, 3);
+      const logoR = navLogo.getBoundingClientRect();
+      const endX = logoR.left + logoR.width / 2;
+      const endY = logoR.top + logoR.height / 2;
+
+      const heroH = heroSection.offsetHeight;
+      const scrollY = window.scrollY;
+      const cy = startCenterY - scrollY;
+
+      const cx = startCenterX + (endX - startCenterX) * eased;
+      const finalY = cy + (endY - cy) * eased;
+      const fs = startFontSize + (endFontSize - startFontSize) * eased;
+      const fadeOut = t > 0.85 ? 1 - (t - 0.85) / 0.15 : 1;
+
+      heroTitleFloat.style.cssText = `
+        font-size:${fs}px;
+        left:${cx}px;
+        top:${finalY}px;
+        transform:translate(-50%,-50%);
+        opacity:${fadeOut};
+        color:${heroTextColor()};
+      `;
+    }
+
+    function morphLoop() {
+      const diff = targetT - currentT;
+      if (Math.abs(diff) < 0.001) {
+        currentT = targetT;
+        applyMorph(currentT);
+        morphRafId = null;
+        return;
+      }
+      currentT += diff * LERP_SPEED;
+      applyMorph(currentT);
+      morphRafId = requestAnimationFrame(morphLoop);
+    }
 
     function onScroll() {
       const y = window.scrollY;
@@ -1298,43 +1356,9 @@
 
       const heroH = heroSection.offsetHeight;
       const scrollEnd = heroH * 0.7;
-      const t = Math.min(Math.max(y / scrollEnd, 0), 1);
-      const eased = 1 - Math.pow(1 - t, 3);
+      targetT = Math.min(Math.max(y / scrollEnd, 0), 1);
 
-      if (t <= 0) {
-        heroTitleFloat.style.opacity = '0';
-        heroTitleEl.style.opacity = '';
-        navLogo.classList.add('hidden');
-        return;
-      }
-
-      if (t >= 1) {
-        heroTitleFloat.style.opacity = '0';
-        heroTitleEl.style.opacity = '0';
-        navLogo.classList.remove('hidden');
-        return;
-      }
-
-      navLogo.classList.add('hidden');
-      heroTitleEl.style.opacity = '0';
-
-      const heroRect = heroSection.getBoundingClientRect();
-      const startX = heroRect.left + startRect.left + startRect.width / 2;
-      const startY = heroRect.top + startRect.top + startRect.height / 2;
-      const endX = endRect.left + endRect.width / 2;
-      const endY = endRect.top + endRect.height / 2;
-
-      const cx = startX + (endX - startX) * eased;
-      const cy = startY + (endY - startY) * eased;
-      const fs = startFontSize + (endFontSize - startFontSize) * eased;
-      const fadeOut = t > 0.85 ? 1 - (t - 0.85) / 0.15 : 1;
-
-      heroTitleFloat.style.fontSize = fs + 'px';
-      heroTitleFloat.style.left = cx + 'px';
-      heroTitleFloat.style.top = cy + 'px';
-      heroTitleFloat.style.transform = 'translate(-50%, -50%)';
-      heroTitleFloat.style.opacity = fadeOut;
-      heroTitleFloat.style.color = getComputedStyle(document.documentElement).getPropertyValue('--hero-text').trim() || '#E8E4E0';
+      if (!morphRafId) morphRafId = requestAnimationFrame(morphLoop);
     }
 
     window.addEventListener('scroll', onScroll, { passive: true });
