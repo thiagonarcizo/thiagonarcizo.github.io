@@ -131,8 +131,10 @@
       font-size: clamp(1.1rem, 2vw, 1.35rem);
       letter-spacing: -0.01em;
       color: var(--text);
-      transition: color 0.3s;
+      transition: color 0.3s, opacity 0.3s var(--ease);
     }
+
+    .nav-logo.hidden { opacity: 0; pointer-events: none; }
 
     .nav-right {
       display: flex;
@@ -378,9 +380,21 @@
       line-height: 1;
       letter-spacing: -0.02em;
       margin-bottom: clamp(12px, 2vw, 20px);
-      opacity: 0;
-      transform: translateY(40px) scale(0.97);
-      animation: heroTitleIn 1.2s var(--ease-out) 0.3s forwards;
+      min-height: 1.1em;
+    }
+
+    .hero-title-float {
+      position: fixed;
+      z-index: 101;
+      font-family: var(--serif);
+      font-weight: 400;
+      line-height: 1;
+      letter-spacing: -0.02em;
+      pointer-events: none;
+      will-change: transform;
+      -webkit-text-stroke: 1px var(--hero-text-outline);
+      paint-order: stroke fill;
+      white-space: nowrap;
     }
 
     .hero-subtitle {
@@ -867,6 +881,7 @@
       html { scroll-behavior: auto; }
       .hero-bg-img { transition: none !important; }
       .hero-trail { display: none; }
+      .hero-title-float { display: none; }
       .reveal { opacity: 1; transform: none; }
     }
 
@@ -928,6 +943,8 @@
     <a href="#contact" data-i18n="nav.contact">contato</a>
   </nav>
 
+  <div class="hero-title-float" id="heroTitleFloat" aria-hidden="true">thiago narcizo</div>
+
   <main>
     <!-- ═══════ HERO ═══════ -->
     <section class="hero" id="hero">
@@ -937,7 +954,7 @@
       <div class="hero-overlay"></div>
       <canvas class="hero-trail" id="heroTrail"></canvas>
       <div class="hero-content">
-        <h1 class="hero-title" data-i18n="hero.title">thiago narcizo</h1>
+        <h1 class="hero-title" id="heroTitle" data-i18n="hero.title">thiago narcizo</h1>
         <p class="hero-subtitle" data-i18n="hero.subtitle">fotógrafo <span class="dot-sep">·</span> paris</p>
       </div>
       <a href="#portfolio" class="hero-scroll" data-i18n-aria="hero.scrollAria" aria-label="ir para o portfolio">
@@ -1243,18 +1260,85 @@
     });
 
     /* ══════════════════════════════════════
-       NAV SCROLL BEHAVIOR
+       NAV SCROLL BEHAVIOR + TITLE MORPH
        ══════════════════════════════════════ */
     const nav = document.getElementById('nav');
+    const navLogo = document.querySelector('.nav-logo');
+    const heroSection = document.getElementById('hero');
+    const heroTitleFloat = document.getElementById('heroTitleFloat');
+    const heroTitleEl = document.getElementById('heroTitle');
     let lastScroll = 0;
+    let titleMorphReady = false;
+    let startRect, endRect, startFontSize, endFontSize;
+
+    function measureTitleMorph() {
+      if (!heroTitleEl || !heroTitleEl.textContent) return;
+      startRect = heroTitleEl.getBoundingClientRect();
+      const heroRect = heroSection.getBoundingClientRect();
+      startRect = {
+        left: startRect.left,
+        top: startRect.top + window.scrollY - heroRect.top,
+        width: startRect.width,
+        height: startRect.height
+      };
+      endRect = navLogo.getBoundingClientRect();
+      startFontSize = parseFloat(getComputedStyle(heroTitleEl).fontSize);
+      endFontSize = parseFloat(getComputedStyle(navLogo).fontSize);
+      titleMorphReady = true;
+    }
+
+    const reducedMotionGlobal = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
     function onScroll() {
       const y = window.scrollY;
       nav.classList.toggle('scrolled', y > 80);
       lastScroll = y;
+
+      if (reducedMotionGlobal || !titleMorphReady) return;
+
+      const heroH = heroSection.offsetHeight;
+      const scrollEnd = heroH * 0.7;
+      const t = Math.min(Math.max(y / scrollEnd, 0), 1);
+      const eased = 1 - Math.pow(1 - t, 3);
+
+      if (t <= 0) {
+        heroTitleFloat.style.opacity = '0';
+        heroTitleEl.style.opacity = '';
+        navLogo.classList.add('hidden');
+        return;
+      }
+
+      if (t >= 1) {
+        heroTitleFloat.style.opacity = '0';
+        heroTitleEl.style.opacity = '0';
+        navLogo.classList.remove('hidden');
+        return;
+      }
+
+      navLogo.classList.add('hidden');
+      heroTitleEl.style.opacity = '0';
+
+      const heroRect = heroSection.getBoundingClientRect();
+      const startX = heroRect.left + startRect.left + startRect.width / 2;
+      const startY = heroRect.top + startRect.top + startRect.height / 2;
+      const endX = endRect.left + endRect.width / 2;
+      const endY = endRect.top + endRect.height / 2;
+
+      const cx = startX + (endX - startX) * eased;
+      const cy = startY + (endY - startY) * eased;
+      const fs = startFontSize + (endFontSize - startFontSize) * eased;
+      const fadeOut = t > 0.85 ? 1 - (t - 0.85) / 0.15 : 1;
+
+      heroTitleFloat.style.fontSize = fs + 'px';
+      heroTitleFloat.style.left = cx + 'px';
+      heroTitleFloat.style.top = cy + 'px';
+      heroTitleFloat.style.transform = 'translate(-50%, -50%)';
+      heroTitleFloat.style.opacity = fadeOut;
+      heroTitleFloat.style.color = getComputedStyle(document.documentElement).getPropertyValue('--hero-text').trim() || '#E8E4E0';
     }
 
     window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', () => { if (titleMorphReady) measureTitleMorph(); });
 
     /* ══════════════════════════════════════
        HERO: RANDOM IMAGES + ADAPTIVE COLOR
@@ -1721,7 +1805,11 @@
        INIT
        ══════════════════════════════════════ */
     setLang(currentLang);
-    onScroll();
+
+    requestAnimationFrame(() => {
+      measureTitleMorph();
+      onScroll();
+    });
   </script>
 </body>
 </html>
