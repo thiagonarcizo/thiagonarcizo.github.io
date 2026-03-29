@@ -44,7 +44,7 @@
       --ease: cubic-bezier(0.16, 1, 0.3, 1);
       --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
       --max-w: 1200px;
-      --hero-text-outline: #1A1918;
+      --hero-title-shadow: 0 2px 18px rgba(0, 0, 0, 0.2);
       --hero-chip-bg: rgba(18, 17, 16, 0.1);
       --hero-chip-border: rgba(232, 228, 224, 0.08);
       --hero-chip-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
@@ -433,8 +433,7 @@
       letter-spacing: -0.02em;
       margin-bottom: clamp(12px, 2vw, 20px);
       min-height: 1.1em;
-      -webkit-text-stroke: 1px var(--hero-text-outline);
-      paint-order: stroke fill;
+      text-shadow: var(--hero-title-shadow);
     }
 
     .hero-title-float {
@@ -446,8 +445,7 @@
       letter-spacing: -0.02em;
       pointer-events: none;
       will-change: transform;
-      -webkit-text-stroke: 1px var(--hero-text-outline);
-      paint-order: stroke fill;
+      text-shadow: var(--hero-title-shadow);
       white-space: nowrap;
     }
 
@@ -1850,14 +1848,14 @@
         if (isLight) {
           root.style.setProperty('--hero-text', '#1A1918');
           root.style.setProperty('--hero-text-sub', 'rgba(26, 25, 24, 0.6)');
-          root.style.setProperty('--hero-text-outline', '#F5F3F0');
+          root.style.setProperty('--hero-title-shadow', '0 2px 16px rgba(245, 243, 240, 0.6)');
           root.style.setProperty('--hero-chip-bg', 'rgba(245, 243, 240, 0.18)');
           root.style.setProperty('--hero-chip-border', 'rgba(26, 25, 24, 0.08)');
           root.style.setProperty('--hero-chip-shadow', '0 4px 12px rgba(18, 17, 16, 0.06)');
         } else {
           root.style.setProperty('--hero-text', '#E8E4E0');
           root.style.setProperty('--hero-text-sub', 'rgba(232, 228, 224, 0.65)');
-          root.style.setProperty('--hero-text-outline', '#1A1918');
+          root.style.setProperty('--hero-title-shadow', '0 2px 18px rgba(0, 0, 0, 0.24)');
           root.style.setProperty('--hero-chip-bg', 'rgba(18, 17, 16, 0.14)');
           root.style.setProperty('--hero-chip-border', 'rgba(232, 228, 224, 0.08)');
           root.style.setProperty('--hero-chip-shadow', '0 4px 12px rgba(0, 0, 0, 0.1)');
