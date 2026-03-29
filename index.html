@@ -28,6 +28,7 @@
       --ease: cubic-bezier(0.16, 1, 0.3, 1);
       --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
       --max-w: 1200px;
+      --hero-text-outline: #1A1918;
     }
 
     [data-theme="dark"] {
@@ -361,6 +362,12 @@
       transition: color 1.2s var(--ease);
     }
 
+    .hero-title,
+    .hero-subtitle {
+      -webkit-text-stroke: 1px var(--hero-text-outline);
+      paint-order: stroke fill;
+    }
+
     .hero-title {
       font-family: var(--serif);
       font-size: clamp(3rem, 8vw, 7rem);
@@ -396,11 +403,30 @@
       z-index: 2;
       opacity: 0;
       animation: fadeUp 1s var(--ease-out) 1.4s forwards;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--hero-text-sub, rgba(232, 228, 224, 0.5));
+      text-decoration: none;
+      cursor: pointer;
+      border-radius: 50%;
+      padding: 8px;
+      transition: color 0.3s var(--ease), opacity 0.3s;
+    }
+
+    .hero-scroll:hover,
+    .hero-scroll:focus-visible {
+      color: var(--hero-text, #E8E4E0);
+      outline: none;
+    }
+
+    .hero-scroll:focus-visible {
+      box-shadow: 0 0 0 2px var(--hero-text, #E8E4E0);
     }
 
     .hero-scroll svg {
       width: 24px; height: 24px;
-      color: var(--hero-text-sub, rgba(232, 228, 224, 0.5));
+      color: inherit;
       animation: scrollBounce 2.5s var(--ease) infinite;
       transition: color 1.2s var(--ease);
     }
@@ -428,6 +454,10 @@
        ══════════════════════════════════════ */
     section {
       padding: clamp(60px, 10vw, 120px) clamp(20px, 4vw, 48px);
+    }
+
+    #portfolio {
+      scroll-margin-top: 72px;
     }
 
     .section-inner {
@@ -906,11 +936,11 @@
         <h1 class="hero-title" data-i18n="hero.title">thiago narcizo</h1>
         <p class="hero-subtitle" data-i18n="hero.subtitle">fotógrafo <span class="dot-sep">·</span> paris</p>
       </div>
-      <div class="hero-scroll">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+      <a href="#portfolio" class="hero-scroll" data-i18n-aria="hero.scrollAria" aria-label="ir para o portfolio">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <polyline points="6 9 12 15 18 9"/>
         </svg>
-      </div>
+      </a>
     </section>
 
     <!-- ═══════ PORTFOLIO ═══════ -->
@@ -1075,7 +1105,7 @@
     const translations = {
       'pt': {
         nav: { portfolio: 'portfolio', about: 'sobre', contact: 'contato' },
-        hero: { title: 'thiago narcizo', subtitle: 'fotógrafo <span class="dot-sep">·</span> paris' },
+        hero: { title: 'thiago narcizo', subtitle: 'fotógrafo <span class="dot-sep">·</span> paris', scrollAria: 'ir para o portfolio' },
         portfolio: {
           title: 'portfolio',
           all: 'todos',
@@ -1100,7 +1130,7 @@
       },
       'en': {
         nav: { portfolio: 'portfolio', about: 'about', contact: 'contact' },
-        hero: { title: 'thiago narcizo', subtitle: 'photographer <span class="dot-sep">·</span> paris' },
+        hero: { title: 'thiago narcizo', subtitle: 'photographer <span class="dot-sep">·</span> paris', scrollAria: 'go to portfolio' },
         portfolio: {
           title: 'portfolio',
           all: 'all',
@@ -1125,7 +1155,7 @@
       },
       'fr': {
         nav: { portfolio: 'portfolio', about: 'à propos', contact: 'contact' },
-        hero: { title: 'thiago narcizo', subtitle: 'photographe <span class="dot-sep">·</span> paris' },
+        hero: { title: 'thiago narcizo', subtitle: 'photographe <span class="dot-sep">·</span> paris', scrollAria: 'aller au portfolio' },
         portfolio: {
           title: 'portfolio',
           all: 'tous',
@@ -1166,6 +1196,13 @@
         let val = translations[lang];
         for (const k of keys) val = val?.[k];
         if (val) el.innerHTML = val;
+      });
+
+      document.querySelectorAll('[data-i18n-aria]').forEach(el => {
+        const keys = el.dataset.i18nAria.split('.');
+        let val = translations[lang];
+        for (const k of keys) val = val?.[k];
+        if (val) el.setAttribute('aria-label', val);
       });
 
       // Update filter buttons
@@ -1294,9 +1331,11 @@
         if (isLight) {
           root.style.setProperty('--hero-text', '#1A1918');
           root.style.setProperty('--hero-text-sub', 'rgba(26, 25, 24, 0.6)');
+          root.style.setProperty('--hero-text-outline', '#F5F3F0');
         } else {
           root.style.setProperty('--hero-text', '#E8E4E0');
           root.style.setProperty('--hero-text-sub', 'rgba(232, 228, 224, 0.65)');
+          root.style.setProperty('--hero-text-outline', '#1A1918');
         }
         root.style.setProperty('--hero-overlay-top', 'rgba(18, 17, 16, 0.1)');
         root.style.setProperty('--hero-overlay-mid', 'rgba(18, 17, 16, 0.2)');
