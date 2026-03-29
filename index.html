@@ -1282,14 +1282,26 @@
     window.addEventListener('resize', updateNavScrollOffset);
     window.addEventListener('load', () => requestAnimationFrame(updateNavScrollOffset));
 
-    document.getElementById('heroScrollBtn')?.addEventListener('click', () => {
-      const target = document.getElementById('portfolio');
+    function scrollToSection(id) {
+      const target = document.getElementById(id);
       const navEl = document.getElementById('nav');
       if (!target || !navEl) return;
       const gap = 16;
       const y = target.getBoundingClientRect().top + window.scrollY - navEl.offsetHeight - gap;
       const smooth = !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
       window.scrollTo({ top: Math.max(0, y), behavior: smooth ? 'smooth' : 'instant' });
+    }
+
+    document.getElementById('heroScrollBtn')?.addEventListener('click', () => scrollToSection('portfolio'));
+
+    document.querySelectorAll('a[href^="#"]').forEach(link => {
+      link.addEventListener('click', (e) => {
+        const id = link.getAttribute('href').slice(1);
+        if (!id) return;
+        e.preventDefault();
+        scrollToSection(id);
+        history.replaceState(null, '', '#' + id);
+      });
     });
 
     /* ══════════════════════════════════════
