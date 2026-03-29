@@ -30,3 +30,4 @@ test-firebase.html
 node_modules/
 
 .claude/
+.playwright-cli/
