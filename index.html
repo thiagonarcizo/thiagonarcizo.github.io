@@ -905,6 +905,13 @@
       object-fit: contain;
       border-radius: 2px;
       user-select: none;
+      touch-action: none;
+      transform-origin: center center;
+      will-change: transform;
+      transition: opacity 0.3s, transform 0.25s var(--ease);
+    }
+
+    .lightbox img.gesture-active {
       transition: opacity 0.3s;
     }
 
@@ -2152,6 +2159,19 @@
     let lightboxItems = [];
     let lightboxIndex = 0;
     let touchStartX = 0;
+    let touchStartY = 0;
+    let touchDeltaX = 0;
+    let touchDeltaY = 0;
+    let pinchStartDistance = 0;
+    let pinchStartScale = 1;
+    let lightboxScale = 1;
+    let lightboxPanX = 0;
+    let lightboxPanY = 0;
+    let lightboxStartPanX = 0;
+    let lightboxStartPanY = 0;
+    let lightboxGestureMode = '';
+    let lightboxGestureMoved = false;
+    let lastLightboxTap = 0;
     let lastLightboxFocus = null;
 
     function getVisibleItems() {
@@ -2205,6 +2225,55 @@
       return Array.from(lightbox.querySelectorAll('button')).filter(el => !el.disabled && el.getClientRects().length > 0);
     }
 
+    function clampValue(value, min, max) {
+      return Math.min(Math.max(value, min), max);
+    }
+
+    function getTouchDistance(touches) {
+      const [first, second] = touches;
+      return Math.hypot(second.clientX - first.clientX, second.clientY - first.clientY);
+    }
+
+    function getLightboxPanLimit(axis) {
+      const baseSize = axis === 'x' ? lightboxImg.offsetWidth : lightboxImg.offsetHeight;
+      return Math.max(0, (baseSize * lightboxScale - baseSize) / 2);
+    }
+
+    function clampLightboxPan() {
+      const limitX = getLightboxPanLimit('x');
+      const limitY = getLightboxPanLimit('y');
+      lightboxPanX = clampValue(lightboxPanX, -limitX, limitX);
+      lightboxPanY = clampValue(lightboxPanY, -limitY, limitY);
+    }
+
+    function renderLightboxTransform({ animate = false } = {}) {
+      if (animate) lightboxImg.classList.remove('gesture-active');
+      lightboxImg.style.transform = `translate3d(${lightboxPanX}px, ${lightboxPanY}px, 0) scale(${lightboxScale})`;
+    }
+
+    // keep zoom state stable across img swaps
+    function resetLightboxZoom({ animate = false } = {}) {
+      lightboxScale = 1;
+      lightboxPanX = 0;
+      lightboxPanY = 0;
+      lightboxGestureMode = '';
+      lightboxGestureMoved = false;
+      lightboxImg.classList.remove('gesture-active');
+      renderLightboxTransform({ animate });
+    }
+
+    function toggleLightboxZoom() {
+      if (lightboxScale > 1.01) {
+        resetLightboxZoom({ animate: true });
+        return;
+      }
+      lightboxScale = 2;
+      lightboxPanX = 0;
+      lightboxPanY = 0;
+      clampLightboxPan();
+      renderLightboxTransform({ animate: true });
+    }
+
     function setLightboxState(isOpen, { restoreFocus = true } = {}) {
       lightbox.classList.toggle('open', isOpen);
       lightbox.hidden = !isOpen;
@@ -2221,6 +2290,7 @@
       lightboxItems = getVisibleItems();
       lightboxIndex = index;
       lastLightboxFocus = document.activeElement;
+      resetLightboxZoom();
       loadLightboxSrc(lightboxItems[lightboxIndex].querySelector('img').dataset.full);
       lightboxImg.alt = lightboxItems[lightboxIndex].querySelector('img').alt;
       syncLightboxMeta();
@@ -2230,10 +2300,12 @@
 
     function closeLightbox(options) {
       setLightboxState(false, options);
+      resetLightboxZoom();
       lightboxImg.src = '';
     }
 
     function navLightbox(dir) {
+      resetLightboxZoom();
       lightboxIndex = (lightboxIndex + dir + lightboxItems.length) % lightboxItems.length;
       const targetImg = lightboxItems[lightboxIndex].querySelector('img');
       loadLightboxSrc(targetImg.dataset.full);
@@ -2273,16 +2345,126 @@
       if (e.key === 'ArrowRight') navLightbox(1);
     });
 
-    // Touch/swipe for mobile lightbox
-    lightbox.addEventListener('touchstart', (e) => {
-      touchStartX = e.changedTouches[0].screenX;
+    lightboxImg.addEventListener('touchstart', (e) => {
+      if (!lightbox.classList.contains('open')) return;
+
+      if (e.touches.length === 2) {
+        pinchStartDistance = getTouchDistance(e.touches);
+        pinchStartScale = lightboxScale;
+        lightboxGestureMode = 'pinch';
+        lightboxGestureMoved = true;
+        lightboxImg.classList.add('gesture-active');
+        return;
+      }
+
+      const touch = e.touches[0];
+      touchStartX = touch.clientX;
+      touchStartY = touch.clientY;
+      touchDeltaX = 0;
+      touchDeltaY = 0;
+      lightboxStartPanX = lightboxPanX;
+      lightboxStartPanY = lightboxPanY;
+      lightboxGestureMode = lightboxScale > 1.01 ? 'pan' : 'swipe';
+      lightboxGestureMoved = false;
+      lightboxImg.classList.add('gesture-active');
     }, { passive: true });
 
-    lightbox.addEventListener('touchend', (e) => {
-      const diff = e.changedTouches[0].screenX - touchStartX;
-      if (Math.abs(diff) > 50) {
-        navLightbox(diff > 0 ? -1 : 1);
+    lightboxImg.addEventListener('touchmove', (e) => {
+      if (!lightbox.classList.contains('open')) return;
+
+      if (e.touches.length === 2) {
+        const nextScale = clampValue(pinchStartScale * (getTouchDistance(e.touches) / Math.max(pinchStartDistance, 1)), 1, 3);
+        lightboxScale = nextScale;
+        clampLightboxPan();
+        lightboxGestureMode = 'pinch';
+        lightboxGestureMoved = true;
+        renderLightboxTransform();
+        e.preventDefault();
+        return;
       }
+
+      const touch = e.touches[0];
+      touchDeltaX = touch.clientX - touchStartX;
+      touchDeltaY = touch.clientY - touchStartY;
+
+      if (lightboxScale > 1.01 || lightboxGestureMode === 'pan') {
+        lightboxGestureMode = 'pan';
+        lightboxGestureMoved = true;
+        lightboxPanX = lightboxStartPanX + touchDeltaX;
+        lightboxPanY = lightboxStartPanY + touchDeltaY;
+        clampLightboxPan();
+        renderLightboxTransform();
+        e.preventDefault();
+        return;
+      }
+
+      if (Math.abs(touchDeltaX) > 10 || Math.abs(touchDeltaY) > 10) {
+        lightboxGestureMoved = true;
+      }
+
+      if (Math.abs(touchDeltaX) > Math.abs(touchDeltaY) * 1.15) {
+        e.preventDefault();
+      }
+    }, { passive: false });
+
+    lightboxImg.addEventListener('touchend', (e) => {
+      if (!lightbox.classList.contains('open')) return;
+
+      if (e.touches.length === 1 && lightboxScale > 1.01) {
+        const touch = e.touches[0];
+        touchStartX = touch.clientX;
+        touchStartY = touch.clientY;
+        lightboxStartPanX = lightboxPanX;
+        lightboxStartPanY = lightboxPanY;
+        lightboxGestureMode = 'pan';
+        lightboxImg.classList.add('gesture-active');
+        return;
+      }
+
+      lightboxImg.classList.remove('gesture-active');
+
+      if (lightboxGestureMode === 'pinch') {
+        if (lightboxScale <= 1.02) {
+          resetLightboxZoom({ animate: true });
+        } else {
+          clampLightboxPan();
+          renderLightboxTransform({ animate: true });
+        }
+        return;
+      }
+
+      if (lightboxScale > 1.01 || lightboxGestureMode === 'pan') {
+        clampLightboxPan();
+        renderLightboxTransform({ animate: true });
+        return;
+      }
+
+      const now = Date.now();
+      const isTap = !lightboxGestureMoved && Math.abs(touchDeltaX) < 8 && Math.abs(touchDeltaY) < 8;
+      if (isTap && now - lastLightboxTap < 280) {
+        toggleLightboxZoom();
+        lastLightboxTap = 0;
+        return;
+      }
+
+      if (isTap) {
+        lastLightboxTap = now;
+        return;
+      }
+
+      if (Math.abs(touchDeltaX) > 56 && Math.abs(touchDeltaY) < 42 && Math.abs(touchDeltaX) > Math.abs(touchDeltaY) * 1.25) {
+        navLightbox(touchDeltaX > 0 ? -1 : 1);
+      }
+    }, { passive: true });
+
+    lightboxImg.addEventListener('touchcancel', () => {
+      lightboxImg.classList.remove('gesture-active');
+      if (lightboxScale <= 1.02) {
+        resetLightboxZoom({ animate: true });
+        return;
+      }
+      clampLightboxPan();
+      renderLightboxTransform({ animate: true });
     }, { passive: true });
 
     // Focus trap
