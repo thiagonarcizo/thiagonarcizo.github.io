@@ -1,0 +1,121 @@
+- generic [active] [ref=e1]:
+  - banner [ref=e2]:
+    - link "thiago narcizo":
+      - /url: "#"
+    - generic [ref=e3]:
+      - list [ref=e4]:
+        - listitem [ref=e5]:
+          - link "portfolio" [ref=e6] [cursor=pointer]:
+            - /url: "#portfolio"
+        - listitem [ref=e7]:
+          - link "sobre" [ref=e8] [cursor=pointer]:
+            - /url: "#about"
+        - listitem [ref=e9]:
+          - link "contato" [ref=e10] [cursor=pointer]:
+            - /url: "#contact"
+      - generic [ref=e11]:
+        - generic [ref=e12]:
+          - button "pt" [ref=e13] [cursor=pointer]
+          - generic [ref=e14]: ·
+          - button "en" [ref=e15] [cursor=pointer]
+          - generic [ref=e16]: ·
+          - button "fr" [ref=e17] [cursor=pointer]
+        - button "alternar tema" [ref=e18] [cursor=pointer]:
+          - img [ref=e19]
+          - img [ref=e25]
+  - generic: thiago narcizo
+  - main [ref=e27]:
+    - generic [ref=e28]:
+      - generic [ref=e36]:
+        - heading "thiago narcizo" [level=1] [ref=e37]
+        - paragraph [ref=e38]:
+          - text: fotógrafo
+          - generic [ref=e39]: ·
+          - text: paris
+      - button "ir para o portfolio" [ref=e40] [cursor=pointer]:
+        - img [ref=e41]
+    - generic [ref=e44]:
+      - heading "portfolio" [level=2] [ref=e45]
+      - generic [ref=e46]:
+        - button "todos" [ref=e47] [cursor=pointer]
+        - button "retrato" [ref=e48] [cursor=pointer]
+        - button "eventos" [ref=e49] [cursor=pointer]
+        - button "rua & paisagem" [ref=e50] [cursor=pointer]
+      - generic [ref=e51]:
+        - button "abrir foto de rua & paisagem" [ref=e52] [cursor=pointer]:
+          - img "rua & paisagem" [ref=e53]
+          - generic:
+            - generic: rua & paisagem
+        - button "abrir foto de retrato" [ref=e54] [cursor=pointer]:
+          - img "retrato" [ref=e55]
+          - generic:
+            - generic: retrato
+        - button "abrir foto de rua & paisagem" [ref=e56] [cursor=pointer]:
+          - img "rua & paisagem" [ref=e57]
+          - generic:
+            - generic: rua & paisagem
+        - button "abrir foto de eventos" [ref=e58] [cursor=pointer]:
+          - img "eventos" [ref=e59]
+          - generic:
+            - generic: eventos
+        - button "abrir foto de eventos" [ref=e60] [cursor=pointer]:
+          - img "eventos" [ref=e61]
+          - generic:
+            - generic: eventos
+        - button "abrir foto de rua & paisagem" [ref=e62] [cursor=pointer]:
+          - img "rua & paisagem" [ref=e63]
+          - generic:
+            - generic: rua & paisagem
+        - button "abrir foto de eventos" [ref=e64] [cursor=pointer]:
+          - img "eventos" [ref=e65]
+          - generic:
+            - generic: eventos
+        - button "abrir foto de rua & paisagem" [ref=e66] [cursor=pointer]:
+          - img "rua & paisagem" [ref=e67]
+          - generic:
+            - generic: rua & paisagem
+        - button "abrir foto de retrato" [ref=e68] [cursor=pointer]:
+          - img "retrato" [ref=e69]
+          - generic:
+            - generic: retrato
+        - button "abrir foto de retrato" [ref=e70] [cursor=pointer]:
+          - img "retrato" [ref=e71]
+          - generic:
+            - generic: retrato
+        - button "abrir foto de retrato":
+          - img "retrato"
+          - generic:
+            - generic: retrato
+        - button "abrir foto de rua & paisagem" [ref=e72] [cursor=pointer]:
+          - img "rua & paisagem" [ref=e73]
+          - generic:
+            - generic: rua & paisagem
+      - button "ver mais trabalhos" [ref=e74] [cursor=pointer]
+    - generic [ref=e77]:
+      - img "thiago narcizo" [ref=e79]
+      - generic [ref=e80]:
+        - heading "sobre mim" [level=2] [ref=e81]
+        - paragraph [ref=e82]:
+          - text: "sou thiago, fotógrafo brasileiro vivendo em paris. minha paixão por fotografia existe desde criança, quando eu pegava a câmera do meu pai pra tirar foto de qualquer coisa (shoutout canonzinha t5i!)... eu comecei a fotografar de verdade em 2020 depois de herdar uma câmera analógica do meu tio avô, depois fiquei com a câmera do meu pai (aquela mesma que eu usava quando criança) e migrei pra foto digital. fiz o curso \"cameras, exposure, and photography\" pela michigan state university. pra mim, fotografia é a certeza da gravação da memória: no fim do dia a gente sempre quer registrar"
+          - emphasis [ref=e83]: aquele
+          - text: momento.
+    - generic [ref=e85]:
+      - heading "vamos conversar" [level=2] [ref=e86]
+      - generic [ref=e87]:
+        - generic [ref=e88]:
+          - generic [ref=e89]: nome
+          - textbox "nome" [ref=e90]
+        - generic [ref=e91]:
+          - generic [ref=e92]: mensagem
+          - textbox "mensagem" [ref=e93]
+        - button "enviar" [ref=e94] [cursor=pointer]
+      - paragraph [ref=e95]: ou me encontre por aqui
+      - generic [ref=e96]:
+        - link "email" [ref=e97] [cursor=pointer]:
+          - /url: mailto:thiago@narcizo.xyz
+          - img [ref=e98]
+        - link "instagram" [ref=e101] [cursor=pointer]:
+          - /url: https://instagram.com/narcizofotos
+          - img [ref=e102]
+  - contentinfo [ref=e106]:
+    - paragraph [ref=e107]: © 2026 thiago narcizo

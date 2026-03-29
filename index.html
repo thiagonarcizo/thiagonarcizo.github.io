@@ -205,9 +205,12 @@
       font-size: 0.8rem;
       letter-spacing: 0.05em;
       color: var(--text-secondary);
-      padding: 2px 4px;
+      min-width: 32px;
+      min-height: 32px;
+      padding: 6px 8px;
       transition: color 0.3s;
       font-weight: 400;
+      border-radius: 999px;
     }
 
     .lang-switcher button.active {
@@ -220,7 +223,7 @@
     .lang-dot { color: var(--text-secondary); opacity: 0.4; font-size: 0.65rem; user-select: none; }
 
     .theme-toggle {
-      width: 36px; height: 36px;
+      width: 44px; height: 44px;
       display: flex; align-items: center; justify-content: center;
       border-radius: 50%;
       transition: background 0.3s;
@@ -267,8 +270,10 @@
       flex-direction: column;
       justify-content: center;
       gap: 5px;
-      width: 36px; height: 36px;
+      width: 44px; height: 44px;
       padding: 6px;
+      border-radius: 50%;
+      transition: background 0.3s;
     }
 
     .hamburger span {
@@ -286,6 +291,7 @@
     .hamburger.open span:nth-child(1) { transform: translateY(6.5px) rotate(45deg); }
     .hamburger.open span:nth-child(2) { opacity: 0; }
     .hamburger.open span:nth-child(3) { transform: translateY(-6.5px) rotate(-45deg); }
+    .hamburger:hover { background: var(--border); }
 
     /* Mobile overlay menu */
     .mobile-menu {
@@ -313,11 +319,20 @@
       font-size: clamp(2rem, 6vw, 3rem);
       color: var(--text);
       transition: color 0.3s;
+      min-height: 44px;
+      display: inline-flex;
+      align-items: center;
     }
 
     .mobile-menu a:hover { color: var(--accent); }
 
     @media (max-width: 768px) {
+      /* hide the hero jump btn on mobile to keep the frame cleaner */
+      .hero-scroll { display: none; }
+      .nav-right { gap: 12px; }
+      .nav-controls { gap: 8px; }
+      .lang-switcher { gap: 2px; }
+      .lang-dot { display: none; }
       .nav-links { display: none; }
       .hamburger { display: flex; }
       .mobile-menu { display: flex; }
@@ -441,6 +456,8 @@
       text-decoration: none;
       cursor: pointer;
       border-radius: 50%;
+      width: 44px;
+      height: 44px;
       padding: 8px;
       transition: color 0.3s var(--ease), opacity 0.3s;
     }
@@ -539,7 +556,8 @@
     .filter-btn {
       font-size: 0.85rem;
       letter-spacing: 0.04em;
-      padding: 8px 20px;
+      min-height: 44px;
+      padding: 10px 20px;
       border-radius: 100px;
       border: 1px solid var(--border);
       color: var(--text-secondary);
@@ -574,6 +592,10 @@
       position: relative;
       cursor: pointer;
       transition: opacity 0.5s var(--ease), transform 0.5s var(--ease);
+      display: block;
+      width: 100%;
+      padding: 0;
+      text-align: inherit;
     }
 
     .masonry-item img {
@@ -594,6 +616,7 @@
       align-items: flex-end;
       padding: 20px;
       transition: background 0.4s var(--ease);
+      pointer-events: none;
     }
 
     .masonry-item:hover .item-overlay {
@@ -816,6 +839,11 @@
       transition: opacity 0.4s var(--ease);
     }
 
+    .lightbox[hidden],
+    .mobile-menu[hidden] {
+      display: none !important;
+    }
+
     .lightbox.open {
       opacity: 1;
       pointer-events: auto;
@@ -890,6 +918,22 @@
       .hero-trail { display: none; }
     }
 
+    a:focus-visible,
+    button:focus-visible,
+    input:focus-visible,
+    textarea:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 3px;
+    }
+
+    .nav-links a:focus-visible,
+    .mobile-menu a:focus-visible,
+    .masonry-item:focus-visible,
+    .contact-links a:focus-visible {
+      box-shadow: 0 0 0 3px color-mix(in srgb, var(--bg) 25%, transparent), 0 0 0 5px var(--accent);
+      outline: none;
+    }
+
     /* ══════════════════════════════════════
        REDUCED MOTION
        ══════════════════════════════════════ */
@@ -934,7 +978,7 @@
           <span class="lang-dot">·</span>
           <button data-lang="fr">fr</button>
         </div>
-        <button class="theme-toggle" aria-label="alternar tema">
+        <button class="theme-toggle" aria-label="alternar tema" data-i18n-aria="actions.toggleTheme">
           <svg class="sun-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="12" cy="12" r="5"/>
             <line x1="12" y1="1" x2="12" y2="3"/>
@@ -950,7 +994,7 @@
             <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
           </svg>
         </button>
-        <button class="hamburger" aria-label="menu">
+        <button class="hamburger" aria-label="abrir menu" data-i18n-aria="actions.openMenu" aria-controls="mobileMenu" aria-expanded="false">
           <span></span><span></span><span></span>
         </button>
       </div>
@@ -958,7 +1002,7 @@
   </header>
 
   <!-- Mobile menu overlay -->
-  <nav class="mobile-menu" id="mobileMenu">
+  <nav class="mobile-menu" id="mobileMenu" aria-hidden="true" hidden inert>
     <a href="#portfolio" data-i18n="nav.portfolio">portfolio</a>
     <a href="#about" data-i18n="nav.about">sobre</a>
     <a href="#contact" data-i18n="nav.contact">contato</a>
@@ -978,7 +1022,7 @@
         <h1 class="hero-title" id="heroTitle" data-i18n="hero.title">thiago narcizo</h1>
         <p class="hero-subtitle" data-i18n="hero.subtitle">fotógrafo <span class="dot-sep">·</span> paris</p>
       </div>
-      <button class="hero-scroll" id="heroScrollBtn" aria-label="ir para o portfolio">
+      <button class="hero-scroll" id="heroScrollBtn" aria-label="ir para o portfolio" data-i18n-aria="hero.scrollAria">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <polyline points="6 9 12 15 18 9"/>
         </svg>
@@ -1034,13 +1078,13 @@
         </form>
         <p class="contact-or reveal" data-i18n="contact.or">ou me encontre por aqui</p>
         <div class="contact-links reveal">
-          <a href="mailto:thiago@narcizo.xyz" aria-label="email">
+          <a href="mailto:thiago@narcizo.xyz" aria-label="email" data-i18n-aria="actions.email">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
               <rect x="2" y="4" width="20" height="16" rx="2"/>
               <polyline points="22,4 12,13 2,4"/>
             </svg>
           </a>
-          <a href="https://instagram.com/narcizofotos" target="_blank" rel="noopener" aria-label="instagram">
+          <a href="https://instagram.com/narcizofotos" target="_blank" rel="noopener" aria-label="instagram" data-i18n-aria="actions.instagram">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
               <rect x="2" y="2" width="20" height="20" rx="5"/>
               <circle cx="12" cy="12" r="5"/>
@@ -1058,16 +1102,16 @@
   </footer>
 
   <!-- ═══════ LIGHTBOX ═══════ -->
-  <div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-label="photo viewer">
-    <button class="lightbox-close" aria-label="fechar">
+  <div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-label="visualizador de fotos" data-i18n-aria="actions.photoViewer" aria-hidden="true" tabindex="-1" hidden inert>
+    <button class="lightbox-close" aria-label="fechar" data-i18n-aria="actions.closeLightbox">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
     </button>
-    <button class="lightbox-arrow lightbox-prev" aria-label="anterior">
+    <button class="lightbox-arrow lightbox-prev" aria-label="foto anterior" data-i18n-aria="actions.previousPhoto">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
     </button>
     <div class="lightbox-spinner" id="lightboxSpinner"></div>
     <img src="" alt="foto em destaque" id="lightboxImg">
-    <button class="lightbox-arrow lightbox-next" aria-label="próximo">
+    <button class="lightbox-arrow lightbox-next" aria-label="próxima foto" data-i18n-aria="actions.nextPhoto">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"/></svg>
     </button>
   </div>
@@ -1163,6 +1207,18 @@
           send: 'enviar',
           or: 'ou me encontre por aqui'
         },
+        actions: {
+          toggleTheme: 'alternar tema',
+          openMenu: 'abrir menu',
+          closeMenu: 'fechar menu',
+          closeLightbox: 'fechar',
+          previousPhoto: 'foto anterior',
+          nextPhoto: 'próxima foto',
+          photoViewer: 'visualizador de fotos',
+          openPhoto: 'abrir foto de {category}',
+          email: 'email',
+          instagram: 'instagram'
+        },
         footer: '© 2026 thiago narcizo'
       },
       'en': {
@@ -1186,6 +1242,18 @@
           message: 'message',
           send: 'send',
           or: 'or find me here'
+        },
+        actions: {
+          toggleTheme: 'toggle theme',
+          openMenu: 'open menu',
+          closeMenu: 'close menu',
+          closeLightbox: 'close',
+          previousPhoto: 'previous photo',
+          nextPhoto: 'next photo',
+          photoViewer: 'photo viewer',
+          openPhoto: 'open {category} photo',
+          email: 'email',
+          instagram: 'instagram'
         },
         footer: '© 2026 thiago narcizo'
       },
@@ -1211,9 +1279,32 @@
           send: 'envoyer',
           or: 'ou retrouvez-moi ici'
         },
+        actions: {
+          toggleTheme: 'changer le thème',
+          openMenu: 'ouvrir le menu',
+          closeMenu: 'fermer le menu',
+          closeLightbox: 'fermer',
+          previousPhoto: 'photo précédente',
+          nextPhoto: 'photo suivante',
+          photoViewer: 'visionneuse de photos',
+          openPhoto: 'ouvrir la photo {category}',
+          email: 'email',
+          instagram: 'instagram'
+        },
         footer: '© 2026 thiago narcizo'
       }
     };
+
+    function getTranslation(path, lang = currentLang) {
+      const keys = path.split('.');
+      let val = translations[lang];
+      for (const key of keys) val = val?.[key];
+      return val;
+    }
+
+    function formatLabel(template, values = {}) {
+      return String(template).replace(/\{(\w+)\}/g, (_, key) => values[key] ?? '');
+    }
 
     /* ══════════════════════════════════════
        LANGUAGE SYSTEM
@@ -1227,16 +1318,12 @@
 
       // Update all i18n elements
       document.querySelectorAll('[data-i18n]').forEach(el => {
-        const keys = el.dataset.i18n.split('.');
-        let val = translations[lang];
-        for (const k of keys) val = val?.[k];
+        const val = getTranslation(el.dataset.i18n, lang);
         if (val) el.innerHTML = val;
       });
 
       document.querySelectorAll('[data-i18n-aria]').forEach(el => {
-        const keys = el.dataset.i18nAria.split('.');
-        let val = translations[lang];
-        for (const k of keys) val = val?.[k];
+        const val = getTranslation(el.dataset.i18nAria, lang);
         if (val) el.setAttribute('aria-label', val);
       });
 
@@ -1244,8 +1331,9 @@
       document.querySelectorAll('[data-filter]').forEach(btn => {
         const filter = btn.dataset.filter;
         const key = filter === 'all' ? 'all' : filter;
-        if (translations[lang].portfolio[key]) {
-          btn.textContent = translations[lang].portfolio[key];
+        const val = getTranslation(`portfolio.${key}`, lang);
+        if (val) {
+          btn.textContent = val;
         }
       });
 
@@ -1253,6 +1341,12 @@
       document.querySelectorAll('.lang-switcher button[data-lang]').forEach(btn => {
         btn.classList.toggle('active', btn.dataset.lang === lang);
       });
+
+      updateGalleryLabels();
+      updateDialogLabels();
+      if (typeof setMenuState === 'function') {
+        setMenuState(mobileMenu.classList.contains('open'), { restoreFocus: false });
+      }
     }
 
     document.querySelectorAll('.lang-switcher button[data-lang]').forEach(btn => {
@@ -1661,18 +1755,41 @@
        ══════════════════════════════════════ */
     const hamburger = document.querySelector('.hamburger');
     const mobileMenu = document.getElementById('mobileMenu');
+    const mobileMenuLinks = Array.from(mobileMenu.querySelectorAll('a'));
+    let lastMenuFocus = null;
+
+    function syncBodyLock() {
+      document.body.style.overflow = mobileMenu.classList.contains('open') || lightbox.classList.contains('open') ? 'hidden' : '';
+    }
+
+    function setMenuState(isOpen, { restoreFocus = true } = {}) {
+      hamburger.classList.toggle('open', isOpen);
+      hamburger.setAttribute('aria-expanded', String(isOpen));
+      hamburger.setAttribute('aria-label', getTranslation(isOpen ? 'actions.closeMenu' : 'actions.openMenu') || '');
+      mobileMenu.classList.toggle('open', isOpen);
+      mobileMenu.hidden = !isOpen;
+      mobileMenu.toggleAttribute('inert', !isOpen);
+      mobileMenu.setAttribute('aria-hidden', String(!isOpen));
+      syncBodyLock();
+
+      if (isOpen) {
+        lastMenuFocus = document.activeElement;
+        requestAnimationFrame(() => mobileMenuLinks[0]?.focus());
+        return;
+      }
+
+      if (restoreFocus && lastMenuFocus instanceof HTMLElement) {
+        requestAnimationFrame(() => lastMenuFocus.focus());
+      }
+    }
 
     hamburger.addEventListener('click', () => {
-      hamburger.classList.toggle('open');
-      mobileMenu.classList.toggle('open');
-      document.body.style.overflow = mobileMenu.classList.contains('open') ? 'hidden' : '';
+      setMenuState(!mobileMenu.classList.contains('open'));
     });
 
     mobileMenu.querySelectorAll('a').forEach(a => {
       a.addEventListener('click', () => {
-        hamburger.classList.remove('open');
-        mobileMenu.classList.remove('open');
-        document.body.style.overflow = '';
+        setMenuState(false, { restoreFocus: false });
       });
     });
 
@@ -1686,10 +1803,31 @@
     function getCategoryLabel(cat) {
       const key = CATEGORY_I18N[cat];
       if (!key) return cat;
-      const parts = key.split('.');
-      let val = translations[currentLang];
-      for (const p of parts) val = val?.[p];
+      const val = getTranslation(key);
       return val || cat;
+    }
+
+    function getPhotoActionLabel(cat) {
+      return formatLabel(getTranslation('actions.openPhoto') || '', { category: getCategoryLabel(cat) });
+    }
+
+    function updateGalleryLabels() {
+      document.querySelectorAll('.masonry-item').forEach(item => {
+        const cat = item.dataset.category;
+        const label = getCategoryLabel(cat);
+        const img = item.querySelector('img');
+        const meta = item.querySelector('.item-cat');
+        item.setAttribute('aria-label', getPhotoActionLabel(cat));
+        if (img) img.alt = label;
+        if (meta) meta.textContent = label;
+      });
+    }
+
+    function updateDialogLabels() {
+      if (!lightbox?.classList.contains('open')) return;
+      const currentItem = lightboxItems[lightboxIndex];
+      const currentImg = currentItem?.querySelector('img');
+      if (currentImg) lightboxImg.alt = currentImg.alt;
     }
 
     const gallery = document.getElementById('gallery');
@@ -1700,15 +1838,29 @@
     let activeFilter = 'all';
 
     function createItem(photo, i) {
-      const div = document.createElement('div');
-      div.className = 'masonry-item reveal';
-      div.dataset.category = photo.cat;
-      div.style.setProperty('--i', i);
-      div.innerHTML = `
-        <img src="${cldUrl(photo.id, 700)}" data-full="${cldUrlMax(photo.id)}" alt="${getCategoryLabel(photo.cat)}" loading="lazy">
-        <div class="item-overlay"><span class="item-cat">${getCategoryLabel(photo.cat)}</span></div>
-      `;
-      return div;
+      const item = document.createElement('button');
+      const img = document.createElement('img');
+      const overlay = document.createElement('div');
+      const meta = document.createElement('span');
+
+      item.type = 'button';
+      item.className = 'masonry-item reveal';
+      item.dataset.category = photo.cat;
+      item.style.setProperty('--i', i);
+      item.setAttribute('aria-label', getPhotoActionLabel(photo.cat));
+
+      img.src = cldUrl(photo.id, 700);
+      img.dataset.full = cldUrlMax(photo.id);
+      img.alt = getCategoryLabel(photo.cat);
+      img.loading = 'lazy';
+
+      overlay.className = 'item-overlay';
+      meta.className = 'item-cat';
+      meta.textContent = getCategoryLabel(photo.cat);
+
+      overlay.appendChild(meta);
+      item.append(img, overlay);
+      return item;
     }
 
     function renderGallery(photos) {
@@ -1797,9 +1949,11 @@
        ══════════════════════════════════════ */
     const lightbox = document.getElementById('lightbox');
     const lightboxImg = document.getElementById('lightboxImg');
+    const lightboxCloseBtn = document.querySelector('.lightbox-close');
     let lightboxItems = [];
     let lightboxIndex = 0;
     let touchStartX = 0;
+    let lastLightboxFocus = null;
 
     function getVisibleItems() {
       return Array.from(document.querySelectorAll('.masonry-item')).filter(item => !item.classList.contains('hidden'));
@@ -1835,24 +1989,47 @@
       preloadAdjacent();
     });
 
+    lightboxImg.addEventListener('error', () => {
+      lightboxImg.classList.remove('loading');
+      lightboxSpinner.classList.remove('visible');
+    });
+
+    function getFocusableLightboxControls() {
+      return Array.from(lightbox.querySelectorAll('button')).filter(el => !el.disabled && el.getClientRects().length > 0);
+    }
+
+    function setLightboxState(isOpen, { restoreFocus = true } = {}) {
+      lightbox.classList.toggle('open', isOpen);
+      lightbox.hidden = !isOpen;
+      lightbox.toggleAttribute('inert', !isOpen);
+      lightbox.setAttribute('aria-hidden', String(!isOpen));
+      syncBodyLock();
+
+      if (!isOpen && restoreFocus && lastLightboxFocus instanceof HTMLElement) {
+        requestAnimationFrame(() => lastLightboxFocus.focus());
+      }
+    }
+
     function openLightbox(index) {
       lightboxItems = getVisibleItems();
       lightboxIndex = index;
+      lastLightboxFocus = document.activeElement;
       loadLightboxSrc(lightboxItems[lightboxIndex].querySelector('img').dataset.full);
-      lightbox.classList.add('open');
-      document.body.style.overflow = 'hidden';
-      lightbox.focus();
+      lightboxImg.alt = lightboxItems[lightboxIndex].querySelector('img').alt;
+      setLightboxState(true);
+      requestAnimationFrame(() => lightboxCloseBtn.focus());
     }
 
-    function closeLightbox() {
-      lightbox.classList.remove('open');
-      document.body.style.overflow = '';
+    function closeLightbox(options) {
+      setLightboxState(false, options);
       lightboxImg.src = '';
     }
 
     function navLightbox(dir) {
       lightboxIndex = (lightboxIndex + dir + lightboxItems.length) % lightboxItems.length;
-      loadLightboxSrc(lightboxItems[lightboxIndex].querySelector('img').dataset.full);
+      const targetImg = lightboxItems[lightboxIndex].querySelector('img');
+      loadLightboxSrc(targetImg.dataset.full);
+      lightboxImg.alt = targetImg.alt;
     }
 
     gallery.addEventListener('click', (e) => {
@@ -1900,9 +2077,10 @@
     // Focus trap
     lightbox.addEventListener('keydown', (e) => {
       if (e.key === 'Tab') {
-        const focusable = lightbox.querySelectorAll('button');
+        const focusable = getFocusableLightboxControls();
         const first = focusable[0];
         const last = focusable[focusable.length - 1];
+        if (!first || !last) return;
         if (e.shiftKey && document.activeElement === first) {
           e.preventDefault(); last.focus();
         } else if (!e.shiftKey && document.activeElement === last) {
@@ -1910,6 +2088,15 @@
         }
       }
     });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && mobileMenu.classList.contains('open')) {
+        setMenuState(false);
+      }
+    });
+
+    setMenuState(false, { restoreFocus: false });
+    setLightboxState(false, { restoreFocus: false });
 
     /* ══════════════════════════════════════
        SCROLL REVEAL (IntersectionObserver)
