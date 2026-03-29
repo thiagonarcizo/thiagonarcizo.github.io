@@ -361,6 +361,10 @@
       .lang-dot { display: none; }
       .nav-links { display: none; }
       .hamburger { display: flex; }
+      .hamburger:focus-visible {
+        outline: none;
+        box-shadow: none;
+      }
       .mobile-menu { display: flex; }
     }
 
@@ -1043,9 +1047,24 @@
 
     .lightbox-mobile-spacer {
       min-height: 56px;
+      padding: 10px 14px;
       border-radius: 18px;
       background: rgba(18, 17, 16, 0.24);
       border: 1px solid rgba(232, 228, 224, 0.06);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .lightbox-mobile-spacer .lightbox-mobile-label,
+    .lightbox-mobile-spacer .lightbox-mobile-count {
+      font-size: 0.74rem;
+      line-height: 1;
+    }
+
+    .lightbox-mobile-spacer .lightbox-mobile-label {
+      max-width: 68%;
     }
 
     @media (max-width: 540px) {
@@ -1067,8 +1086,13 @@
       .lightbox-close {
         top: max(14px, env(safe-area-inset-top));
         right: 16px;
-        background: rgba(18, 17, 16, 0.42);
-        border: 1px solid rgba(232, 228, 224, 0.1);
+        background: transparent;
+        border: none;
+      }
+
+      .lightbox-close:focus-visible {
+        outline: none;
+        box-shadow: none;
       }
 
       .lightbox-mobile-top,
@@ -1081,9 +1105,7 @@
       }
 
       .lightbox-mobile-top {
-        top: max(14px, env(safe-area-inset-top));
-        right: 72px;
-        gap: 12px;
+        display: none;
       }
 
       .lightbox-mobile-dock {
@@ -1283,12 +1305,8 @@
     <button class="lightbox-close" aria-label="fechar" data-i18n-aria="actions.closeLightbox">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
     </button>
-    <div class="lightbox-mobile-top" aria-live="polite">
+    <div class="lightbox-mobile-top" aria-hidden="true">
       <div class="lightbox-mobile-handle" aria-hidden="true"></div>
-      <div class="lightbox-mobile-meta">
-        <p class="lightbox-mobile-label" id="lightboxMobileLabel"></p>
-        <p class="lightbox-mobile-count" id="lightboxMobileCount"></p>
-      </div>
     </div>
     <button class="lightbox-arrow lightbox-prev" aria-label="foto anterior" data-i18n-aria="actions.previousPhoto">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
@@ -1302,7 +1320,10 @@
       <button class="lightbox-mobile-btn lightbox-mobile-prev" aria-label="foto anterior" data-i18n-aria="actions.previousPhoto">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg>
       </button>
-      <div class="lightbox-mobile-spacer" aria-hidden="true"></div>
+      <div class="lightbox-mobile-spacer" aria-live="polite">
+        <p class="lightbox-mobile-label" id="lightboxMobileLabel"></p>
+        <p class="lightbox-mobile-count" id="lightboxMobileCount"></p>
+      </div>
       <button class="lightbox-mobile-btn lightbox-mobile-next" aria-label="próxima foto" data-i18n-aria="actions.nextPhoto">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 6 15 12 9 18"/></svg>
       </button>
