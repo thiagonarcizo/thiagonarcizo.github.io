@@ -493,6 +493,14 @@
       scroll-margin-top: var(--nav-scroll-offset);
     }
 
+    #portfolio {
+      position: relative;
+      z-index: 3;
+      margin-top: -2px;
+      padding-top: calc(clamp(60px, 10vw, 120px) + 2px);
+      background: var(--bg);
+    }
+
     .section-inner {
       max-width: var(--max-w);
       margin: 0 auto;
@@ -1286,7 +1294,8 @@
       const target = document.getElementById(id);
       const navEl = document.getElementById('nav');
       if (!target || !navEl) return;
-      const gap = 16;
+      // keep the portfolio jump flush so the hero edge doesn't peek through
+      const gap = id === 'portfolio' ? 0 : 16;
       const y = target.getBoundingClientRect().top + window.scrollY - navEl.offsetHeight - gap;
       const smooth = !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
       window.scrollTo({ top: Math.max(0, y), behavior: smooth ? 'smooth' : 'instant' });
