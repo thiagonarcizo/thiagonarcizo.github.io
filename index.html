@@ -1397,30 +1397,26 @@
         return a;
       }
 
-      function isLandscape(publicId) {
+      function checkLandscape(publicId) {
         return new Promise(resolve => {
           const img = new Image();
-          // Cloudinary serves 1×1 version instantly -- width/height tells us orientation
-          img.src = `https://res.cloudinary.com/${CLOUD}/image/upload/w_2,h_2,c_pad/${publicId}`;
-          img.onload = () => resolve(img.naturalWidth >= img.naturalHeight);
-          img.onerror = () => resolve(true);
+          img.src = `https://res.cloudinary.com/${CLOUD}/image/upload/w_10/${publicId}`;
+          img.onload = () => resolve({ id: publicId, ok: img.naturalWidth >= img.naturalHeight });
+          img.onerror = () => resolve({ id: publicId, ok: true });
         });
       }
 
       async function pickHeroPhotos() {
         const candidates = shuffle(FALLBACK_PHOTOS);
-        const chosen = [];
-        for (const photo of candidates) {
-          if (chosen.length >= HERO_COUNT) break;
-          const landscape = await isLandscape(photo.id);
-          if (landscape) chosen.push(photo);
-        }
-        // Fallback: if not enough landscape found, fill with whatever's left
+        // Check all in parallel
+        const results = await Promise.all(candidates.map(p => checkLandscape(p.id)));
+        const landscapeIds = new Set(results.filter(r => r.ok).map(r => r.id));
+        const landscape = candidates.filter(p => landscapeIds.has(p.id));
+        const chosen = landscape.slice(0, HERO_COUNT);
+        // Fallback if not enough
         if (chosen.length < HERO_COUNT) {
-          for (const photo of candidates) {
-            if (chosen.length >= HERO_COUNT) break;
-            if (!chosen.includes(photo)) chosen.push(photo);
-          }
+          const rest = candidates.filter(p => !landscapeIds.has(p.id));
+          chosen.push(...rest.slice(0, HERO_COUNT - chosen.length));
         }
         return chosen;
       }
