@@ -1275,14 +1275,12 @@
 
     function measureTitleMorph() {
       if (!heroTitleEl || !heroTitleEl.textContent) return;
-      const saved = window.scrollY;
-      window.scrollTo(0, 0);
+      const y = window.scrollY;
       const titleR = heroTitleEl.getBoundingClientRect();
       startCenterX = titleR.left + titleR.width / 2;
-      startCenterY = titleR.top + titleR.height / 2;
+      startCenterY = titleR.top + titleR.height / 2 + y;
       startFontSize = parseFloat(getComputedStyle(heroTitleEl).fontSize);
       endFontSize = parseFloat(getComputedStyle(navLogo).fontSize);
-      window.scrollTo(0, saved);
       titleMorphReady = true;
     }
 
