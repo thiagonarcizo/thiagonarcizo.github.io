@@ -2295,6 +2295,13 @@
       renderLightboxTransform({ animate: true });
     }
 
+    function clearLightboxTapIntent() {
+      lastLightboxTap = 0;
+      touchDeltaX = 0;
+      touchDeltaY = 0;
+      lightboxGestureMoved = true;
+    }
+
     function setLightboxState(isOpen, { restoreFocus = true } = {}) {
       lightbox.classList.toggle('open', isOpen);
       lightbox.hidden = !isOpen;
@@ -2348,6 +2355,14 @@
     }, true);
 
     function initLightbox() {}
+
+    // keep dbl tap zoom scoped to the photo only
+    [lightboxCloseBtn, document.querySelector('.lightbox-prev'), document.querySelector('.lightbox-next'), lightboxMobilePrevBtn, lightboxMobileNextBtn]
+      .filter(Boolean)
+      .forEach(control => {
+        control.addEventListener('touchstart', clearLightboxTapIntent, { passive: true });
+        control.addEventListener('click', clearLightboxTapIntent);
+      });
 
     document.querySelector('.lightbox-close').addEventListener('click', closeLightbox);
     document.querySelector('.lightbox-prev').addEventListener('click', () => navLightbox(-1));
