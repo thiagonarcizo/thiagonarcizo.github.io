@@ -1288,9 +1288,8 @@
     }
     updateNavScrollOffset();
     window.addEventListener('resize', updateNavScrollOffset);
-    window.addEventListener('load', () => requestAnimationFrame(updateNavScrollOffset));
 
-    function scrollToSection(id) {
+    function scrollToSection(id, behaviorOverride) {
       const target = document.getElementById(id);
       const navEl = document.getElementById('nav');
       if (!target || !navEl) return;
@@ -1298,8 +1297,23 @@
       const gap = id === 'portfolio' ? 0 : 16;
       const y = target.getBoundingClientRect().top + window.scrollY - navEl.offsetHeight - gap;
       const smooth = !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-      window.scrollTo({ top: Math.max(0, y), behavior: smooth ? 'smooth' : 'instant' });
+      const behavior = behaviorOverride ?? (smooth ? 'smooth' : 'instant');
+      window.scrollTo({ top: Math.max(0, y), behavior });
     }
+
+    function syncHashScroll(behavior = 'instant') {
+      const id = decodeURIComponent(window.location.hash.replace(/^#/, ''));
+      if (!id) return;
+      // wait a frame so the native hash jump can finish before we correct it
+      requestAnimationFrame(() => scrollToSection(id, behavior));
+    }
+
+    window.addEventListener('load', () => {
+      requestAnimationFrame(() => {
+        updateNavScrollOffset();
+        syncHashScroll('instant');
+      });
+    });
 
     document.getElementById('heroScrollBtn')?.addEventListener('click', () => scrollToSection('portfolio'));
 
@@ -1312,6 +1326,8 @@
         history.replaceState(null, '', '#' + id);
       });
     });
+
+    window.addEventListener('hashchange', () => syncHashScroll('instant'));
 
     /* ══════════════════════════════════════
        NAV SCROLL BEHAVIOR + TITLE MORPH
