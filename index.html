@@ -1308,10 +1308,23 @@
       requestAnimationFrame(() => scrollToSection(id, behavior));
     }
 
+    function isReloadNavigation() {
+      const navEntry = performance.getEntriesByType('navigation')[0];
+      return navEntry?.type === 'reload';
+    }
+
+    function resetToHeroOnReload() {
+      if (!isReloadNavigation()) return false;
+      // drop the hash on reload so the browser doesn't restore an old anchor jump
+      if (window.location.hash) history.replaceState(null, '', window.location.pathname + window.location.search);
+      requestAnimationFrame(() => window.scrollTo({ top: 0, behavior: 'instant' }));
+      return true;
+    }
+
     window.addEventListener('load', () => {
       requestAnimationFrame(() => {
         updateNavScrollOffset();
-        syncHashScroll('instant');
+        if (!resetToHeroOnReload()) syncHashScroll('instant');
       });
     });
 
