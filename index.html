@@ -45,6 +45,7 @@
       --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
       --max-w: 1200px;
       --hero-text-outline: #1A1918;
+      --nav-scroll-offset: 80px;
     }
 
     [data-theme="dark"] {
@@ -490,8 +491,10 @@
       padding: clamp(60px, 10vw, 120px) clamp(20px, 4vw, 48px);
     }
 
-    #portfolio {
-      scroll-margin-top: 72px;
+    #portfolio,
+    #about,
+    #contact {
+      scroll-margin-top: var(--nav-scroll-offset);
     }
 
     .section-inner {
@@ -1273,6 +1276,28 @@
     document.querySelector('.theme-toggle').addEventListener('click', () => {
       const next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
       setTheme(next);
+    });
+
+    function updateNavScrollOffset() {
+      const navEl = document.getElementById('nav');
+      if (!navEl) return;
+      const gap = 12;
+      document.documentElement.style.setProperty('--nav-scroll-offset', (navEl.offsetHeight + gap) + 'px');
+    }
+    updateNavScrollOffset();
+    window.addEventListener('resize', updateNavScrollOffset);
+    window.addEventListener('load', () => requestAnimationFrame(updateNavScrollOffset));
+
+    document.querySelector('.hero-scroll')?.addEventListener('click', (e) => {
+      e.preventDefault();
+      const target = document.getElementById('portfolio');
+      const navEl = document.getElementById('nav');
+      if (!target || !navEl) return;
+      const gap = 12;
+      const y = target.getBoundingClientRect().top + window.scrollY - navEl.offsetHeight - gap;
+      const smooth = !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      window.scrollTo({ top: Math.max(0, y), behavior: smooth ? 'smooth' : 'instant' });
+      history.replaceState(null, '', '#portfolio');
     });
 
     /* ══════════════════════════════════════
