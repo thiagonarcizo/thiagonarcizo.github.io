@@ -2084,7 +2084,7 @@
     const gallery = document.getElementById('gallery');
     const loadMoreBtn = document.getElementById('loadMoreBtn');
     const INITIAL_COUNT = 12;
-    let allShuffled = [];
+    let allOrdered = [];
     let shownCount = 0;
     let activeFilter = 'all';
 
@@ -2114,8 +2114,80 @@
       return item;
     }
 
+    function parseCaptureDateFromId(publicId) {
+      const withTimeMatch = publicId.match(/^(\d{8})-(\d{6})-/);
+      if (withTimeMatch) {
+        const [, rawDate, rawTime] = withTimeMatch;
+        const year = Number(rawDate.slice(0, 4));
+        const month = Number(rawDate.slice(4, 6)) - 1;
+        const day = Number(rawDate.slice(6, 8));
+        const hours = Number(rawTime.slice(0, 2));
+        const minutes = Number(rawTime.slice(2, 4));
+        const seconds = Number(rawTime.slice(4, 6));
+        return Date.UTC(year, month, day, hours, minutes, seconds);
+      }
+
+      const dateMatch = publicId.match(/^(\d{8})-/);
+      if (!dateMatch) return null;
+
+      const rawDate = dateMatch[1];
+      const yearFirstYear = Number(rawDate.slice(0, 4));
+      const yearFirstMonth = Number(rawDate.slice(4, 6));
+      const yearFirstDay = Number(rawDate.slice(6, 8));
+
+      // accept both yyyymmdd and ddmmyyyy prefixes from the current asset names
+      if (
+        yearFirstYear >= 1900 &&
+        yearFirstYear <= 2100 &&
+        yearFirstMonth >= 1 &&
+        yearFirstMonth <= 12 &&
+        yearFirstDay >= 1 &&
+        yearFirstDay <= 31
+      ) {
+        return Date.UTC(yearFirstYear, yearFirstMonth - 1, yearFirstDay);
+      }
+
+      const day = Number(rawDate.slice(0, 2));
+      const month = Number(rawDate.slice(2, 4)) - 1;
+      const year = Number(rawDate.slice(4, 8));
+      return Date.UTC(year, month, day);
+    }
+
+    function parseSequenceFromId(publicId) {
+      const match = publicId.match(/^(IMG_|CZ1A|F)(\d+)/);
+      return match ? Number(match[2]) : null;
+    }
+
+    function sortPhotosChronologically(photos) {
+      return photos
+        .map((photo, index) => ({
+          ...photo,
+          __captureTs: parseCaptureDateFromId(photo.id),
+          __sequence: parseSequenceFromId(photo.id),
+          __originalIndex: index
+        }))
+        .sort((a, b) => {
+          // use capture date when we can infer it from the asset name
+          if (a.__captureTs !== null && b.__captureTs !== null && a.__captureTs !== b.__captureTs) {
+            return a.__captureTs - b.__captureTs;
+          }
+          if (a.__captureTs !== null) return -1;
+          if (b.__captureTs !== null) return 1;
+
+          // keep no-date assets in a stable camera-sequence order instead of random
+          if (a.__sequence !== null && b.__sequence !== null && a.__sequence !== b.__sequence) {
+            return a.__sequence - b.__sequence;
+          }
+          if (a.__sequence !== null) return -1;
+          if (b.__sequence !== null) return 1;
+
+          return a.__originalIndex - b.__originalIndex;
+        })
+        .map(({ __captureTs, __sequence, __originalIndex, ...photo }) => photo);
+    }
+
     function renderGallery(photos) {
-      allShuffled = photos.slice().sort(() => Math.random() - 0.5);
+      allOrdered = sortPhotosChronologically(photos);
       gallery.innerHTML = '';
       shownCount = 0;
       activeFilter = 'all';
@@ -2152,8 +2224,8 @@
     function rebuildForFilter(filter) {
       activeFilter = filter;
       const filtered = filter === 'all'
-        ? allShuffled
-        : allShuffled.filter(p => p.cat === filter);
+        ? allOrdered
+        : allOrdered.filter(p => p.cat === filter);
       gallery.innerHTML = '';
       shownCount = 0;
       const batch = filtered.slice(0, INITIAL_COUNT);
@@ -2164,8 +2236,8 @@
       loadMoreBtn.style.display = shownCount < filtered.length ? 'block' : 'none';
       loadMoreBtn.onclick = () => {
         const filtered2 = filter === 'all'
-          ? allShuffled
-          : allShuffled.filter(p => p.cat === filter);
+          ? allOrdered
+          : allOrdered.filter(p => p.cat === filter);
         const next = filtered2.slice(shownCount, shownCount + INITIAL_COUNT);
         next.forEach((photo, i) => {
           gallery.appendChild(createItem(photo, shownCount + i));
