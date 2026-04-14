@@ -2694,12 +2694,8 @@
         return;
       }
 
+      // block wheel panning once desktop zoom is on so scroll won't drag the photo around
       if (!desktopZoomActive) return;
-      const rect = lightboxImg.getBoundingClientRect();
-      if (!rect.width || !rect.height) return;
-      desktopZoomOriginX = clampValue(desktopZoomOriginX + (e.deltaX / rect.width) * 100, 0, 100);
-      desktopZoomOriginY = clampValue(desktopZoomOriginY + (e.deltaY / rect.height) * 100, 0, 100);
-      syncDesktopZoomUi();
       e.preventDefault();
     }, { passive: false });
 
