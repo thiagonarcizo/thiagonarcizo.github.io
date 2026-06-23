@@ -680,28 +680,39 @@
     .masonry-item .item-overlay {
       position: absolute;
       inset: 0;
-      background: rgba(18, 17, 16, 0);
       display: flex;
       align-items: flex-end;
       padding: 20px;
-      transition: background 0.4s var(--ease);
       pointer-events: none;
     }
 
-    .masonry-item:hover .item-overlay {
+    .masonry-item .item-overlay::before {
+      content: "";
+      position: absolute;
+      inset: 0;
       background: rgba(18, 17, 16, 0.3);
+      opacity: 0;
+      transition: opacity 0.42s var(--ease);
     }
 
     .masonry-item .item-cat {
+      position: relative;
       font-size: 0.78rem;
       letter-spacing: 0.08em;
-      color: rgba(232, 228, 224, 0);
-      transition: color 0.4s var(--ease);
+      color: rgba(232, 228, 224, 0.85);
+      opacity: 0;
+      transform: translateY(8px);
+      transition: opacity 0.35s var(--ease), transform 0.42s var(--ease);
       font-weight: 400;
     }
 
-    .masonry-item:hover .item-cat {
-      color: rgba(232, 228, 224, 0.85);
+    .masonry-item:is(:hover, :focus-visible) .item-overlay::before,
+    .masonry-item:is(:hover, :focus-visible) .item-cat {
+      opacity: 1;
+    }
+
+    .masonry-item:is(:hover, :focus-visible) .item-cat {
+      transform: translateY(0);
     }
 
     .masonry-item.hidden {
