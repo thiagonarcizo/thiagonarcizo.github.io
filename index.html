@@ -680,23 +680,17 @@
     .masonry-item .item-overlay {
       position: absolute;
       inset: 0;
+      background: rgba(18, 17, 16, 0.3);
       display: flex;
       align-items: flex-end;
       padding: 20px;
-      pointer-events: none;
-    }
-
-    .masonry-item .item-overlay::before {
-      content: "";
-      position: absolute;
-      inset: 0;
-      background: rgba(18, 17, 16, 0.3);
       opacity: 0;
-      transition: opacity 0.42s var(--ease);
+      pointer-events: none;
+      transition: opacity 0.35s var(--ease);
+      will-change: opacity;
     }
 
     .masonry-item .item-cat {
-      position: relative;
       font-size: 0.78rem;
       letter-spacing: 0.08em;
       color: rgba(232, 228, 224, 0.85);
@@ -704,9 +698,10 @@
       transform: translateY(8px);
       transition: opacity 0.35s var(--ease), transform 0.42s var(--ease);
       font-weight: 400;
+      will-change: opacity, transform;
     }
 
-    .masonry-item:is(:hover, :focus-visible) .item-overlay::before,
+    .masonry-item:is(:hover, :focus-visible) .item-overlay,
     .masonry-item:is(:hover, :focus-visible) .item-cat {
       opacity: 1;
     }
@@ -725,8 +720,12 @@
     }
 
     /* stagger entrance */
-    .masonry-item.reveal {
+    .masonry-item.reveal:not(.visible) {
       transition-delay: calc(var(--i, 0) * 80ms);
+    }
+
+    .masonry-item.reveal.visible {
+      transition-delay: 0ms;
     }
 
     .more-btn {
